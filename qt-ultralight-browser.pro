@@ -46,8 +46,8 @@ COPIES += ultralightBin ultralightRes
 
 ultralightBin.files = $$files($$PWD/../ultralight/bin/*.dll)
 debug: ultralightBin.path = $$OUT_PWD/debug
-else: ultralightBin.path = $$OUT_PWD/release
+release: ultralightBin.path = $$OUT_PWD/release
 
 ultralightRes.files = $$files($$PWD/../ultralight/bin/resources/*)
 debug: ultralightRes.path = $$OUT_PWD/debug/resources
-else: ultralightRes.path = $$OUT_PWD/release/resources
+release: ultralightRes.path = $$OUT_PWD/release/resources
