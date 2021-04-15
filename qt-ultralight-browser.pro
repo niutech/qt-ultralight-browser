@@ -32,10 +32,12 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-unix|win32: LIBS += -L$$PWD/../ultralight/lib/ -lUltralight -lUltralightCore -lAppCore -lWebCore
+ULTRALIGHT_PATH = ../ultralight
 
-INCLUDEPATH += $$PWD/../ultralight/include
-DEPENDPATH += $$PWD/../ultralight/include
+unix|win32: LIBS += -L$$PWD/$$ULTRALIGHT_PATH/lib/ -lUltralight -lUltralightCore -lAppCore -lWebCore
+
+INCLUDEPATH += $$PWD/$$ULTRALIGHT_PATH/include
+DEPENDPATH += $$PWD/$$ULTRALIGHT_PATH/include
 
 DISTFILES += \
     assets/ultralight.ico
@@ -44,10 +46,10 @@ RC_ICONS = assets/ultralight.ico
 
 COPIES += ultralightBin ultralightRes
 
-ultralightBin.files = $$files($$PWD/../ultralight/bin/*.dll)
+ultralightBin.files = $$files($$PWD/$$ULTRALIGHT_PATH/bin/*.dll)
 debug: ultralightBin.path = $$OUT_PWD/debug
 release: ultralightBin.path = $$OUT_PWD/release
 
-ultralightRes.files = $$files($$PWD/../ultralight/bin/resources/*)
+ultralightRes.files = $$files($$PWD/$$ULTRALIGHT_PATH/bin/resources/*)
 debug: ultralightRes.path = $$OUT_PWD/debug/resources
 release: ultralightRes.path = $$OUT_PWD/release/resources
