@@ -18,6 +18,8 @@ class QUltralight : public QWidget,
     Q_OBJECT
     RefPtr<Window> window_;
     RefPtr<Overlay> overlay_;
+    static int QtModsToUltralightMods(int mods);
+    static int QtKeyCodeToUltralightKeyCode(int key);
 
 public:
     QUltralight(QWidget *parent = nullptr, Monitor *monitor = nullptr);

@@ -39,8 +39,7 @@ unix|win32: LIBS += -L$$PWD/$$ULTRALIGHT_PATH/lib/ -lUltralight -lUltralightCore
 INCLUDEPATH += $$PWD/$$ULTRALIGHT_PATH/include
 DEPENDPATH += $$PWD/$$ULTRALIGHT_PATH/include
 
-DISTFILES += \
-    assets/ultralight.ico
+DISTFILES += assets/ultralight.ico
 
 RC_ICONS = assets/ultralight.ico
 
@@ -51,5 +50,5 @@ debug: ultralightBin.path = $$OUT_PWD/debug
 release: ultralightBin.path = $$OUT_PWD/release
 
 ultralightRes.files = $$files($$PWD/$$ULTRALIGHT_PATH/bin/resources/*)
-debug: ultralightRes.path = $$OUT_PWD/debug/resources
-release: ultralightRes.path = $$OUT_PWD/release/resources
+debug: ultralightRes.path = $$OUT_PWD/debug/assets/resources
+release: ultralightRes.path = $$OUT_PWD/release/assets/resources

@@ -7,7 +7,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     QString home("https://duckduckgo.com/");
 
-    app_ = App::Create();
+    Settings settings_;
+    settings_.developer_name = "Niu Tech";
+    settings_.app_name = "Qt Ultralight Browser";
+    app_ = App::Create(settings_);
 
     // URL bar
     urlBar_ = new QLineEdit(ui->toolBar);
