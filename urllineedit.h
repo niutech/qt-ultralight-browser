@@ -31,15 +31,77 @@
 **
 ****************************************************************************/
 
-#include "browserapplication.h"
+#ifndef URLLINEEDIT_H
+#define URLLINEEDIT_H
 
-int main(int argc, char **argv)
+#include <QtCore/QUrl>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QStyleOptionFrame>
+
+QT_BEGIN_NAMESPACE
+class QLineEdit;
+QT_END_NAMESPACE
+
+class ClearButton;
+class ExLineEdit : public QWidget
 {
-    Q_INIT_RESOURCE(data);
-    BrowserApplication application(argc, argv);
-    if (!application.isTheOnlyBrowser() || !application.isCorrectlyInitialized())
-        return 0;
-    application.newMainWindow();
-    return application.exec();
-}
+    Q_OBJECT
+
+public:
+    ExLineEdit(QWidget *parent = 0);
+
+    inline QLineEdit *lineEdit() const { return m_lineEdit; }
+
+    void setLeftWidget(QWidget *widget);
+    QWidget *leftWidget() const;
+
+    QSize sizeHint() const;
+
+    QVariant inputMethodQuery(Qt::InputMethodQuery property) const;
+protected:
+    void focusInEvent(QFocusEvent *event);
+    void focusOutEvent(QFocusEvent *event);
+    void keyPressEvent(QKeyEvent *event);
+    void paintEvent(QPaintEvent *event);
+    void resizeEvent(QResizeEvent *event);
+    void inputMethodEvent(QInputMethodEvent *e);
+    bool event(QEvent *event);
+
+protected:
+    void updateGeometries();
+    void initStyleOption(QStyleOptionFrameV2 *option) const;
+
+    QWidget *m_leftWidget;
+    QLineEdit *m_lineEdit;
+    ClearButton *m_clearButton;
+};
+
+class UrlIconLabel;
+class WebView;
+class UrlLineEdit : public ExLineEdit
+{
+    Q_OBJECT
+
+public:
+    UrlLineEdit(QWidget *parent = 0);
+    void setWebView(WebView *webView);
+
+protected:
+    void paintEvent(QPaintEvent *event);
+    void focusOutEvent(QFocusEvent *event);
+
+private slots:
+    void webViewUrlChanged(const QUrl &url);
+    void webViewIconChanged();
+
+private:
+    QLinearGradient generateGradient(const QColor &color) const;
+    WebView *m_webView;
+    UrlIconLabel *m_iconLabel;
+    QColor m_defaultBaseColor;
+
+};
+
+
+#endif // URLLINEEDIT_H
 

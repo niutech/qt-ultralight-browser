@@ -31,15 +31,38 @@
 **
 ****************************************************************************/
 
-#include "browserapplication.h"
+#ifndef AUTOSAVER_H
+#define AUTOSAVER_H
 
-int main(int argc, char **argv)
-{
-    Q_INIT_RESOURCE(data);
-    BrowserApplication application(argc, argv);
-    if (!application.isTheOnlyBrowser() || !application.isCorrectlyInitialized())
-        return 0;
-    application.newMainWindow();
-    return application.exec();
-}
+#include <QtCore/QObject>
+#include <QtCore/QBasicTimer>
+#include <QtCore/QTime>
+
+/*
+    This class will call the save() slot on the parent object when the parent changes.
+    It will wait several seconds after changed() to combining multiple changes and
+    prevent continuous writing to disk.
+  */
+class AutoSaver : public QObject {
+
+Q_OBJECT
+
+public:
+    AutoSaver(QObject *parent);
+    ~AutoSaver();
+    void saveIfNeccessary();
+
+public slots:
+    void changeOccurred();
+
+protected:
+    void timerEvent(QTimerEvent *event);
+
+private:
+    QBasicTimer m_timer;
+    QTime m_firstChange;
+
+};
+
+#endif // AUTOSAVER_H
 

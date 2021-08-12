@@ -31,15 +31,22 @@
 **
 ****************************************************************************/
 
-#include "browserapplication.h"
+#ifndef SQUEEZELABEL_H
+#define SQUEEZELABEL_H
 
-int main(int argc, char **argv)
+#include <QtWidgets/QLabel>
+
+class SqueezeLabel : public QLabel
 {
-    Q_INIT_RESOURCE(data);
-    BrowserApplication application(argc, argv);
-    if (!application.isTheOnlyBrowser() || !application.isCorrectlyInitialized())
-        return 0;
-    application.newMainWindow();
-    return application.exec();
-}
+    Q_OBJECT
+
+public:
+    SqueezeLabel(QWidget *parent = 0);
+
+protected:
+    void paintEvent(QPaintEvent *event);
+
+};
+
+#endif // SQUEEZELABEL_H
 

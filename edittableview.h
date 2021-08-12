@@ -31,15 +31,23 @@
 **
 ****************************************************************************/
 
-#include "browserapplication.h"
+#ifndef EDITTABLEVIEW_H
+#define EDITTABLEVIEW_H
 
-int main(int argc, char **argv)
+#include <QtWidgets/QTableView>
+
+class EditTableView : public QTableView
 {
-    Q_INIT_RESOURCE(data);
-    BrowserApplication application(argc, argv);
-    if (!application.isTheOnlyBrowser() || !application.isCorrectlyInitialized())
-        return 0;
-    application.newMainWindow();
-    return application.exec();
-}
+    Q_OBJECT
+
+public:
+    EditTableView(QWidget *parent = 0);
+    void keyPressEvent(QKeyEvent *event);
+
+public slots:
+    void removeOne();
+    void removeAll();
+};
+
+#endif // EDITTABLEVIEW_H
 

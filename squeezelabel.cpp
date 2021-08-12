@@ -31,15 +31,23 @@
 **
 ****************************************************************************/
 
-#include "browserapplication.h"
+#include "squeezelabel.h"
 
-int main(int argc, char **argv)
+SqueezeLabel::SqueezeLabel(QWidget *parent) : QLabel(parent)
 {
-    Q_INIT_RESOURCE(data);
-    BrowserApplication application(argc, argv);
-    if (!application.isTheOnlyBrowser() || !application.isCorrectlyInitialized())
-        return 0;
-    application.newMainWindow();
-    return application.exec();
+}
+
+void SqueezeLabel::paintEvent(QPaintEvent *event)
+{
+    QFontMetrics fm = fontMetrics();
+    if (fm.width(text()) > contentsRect().width()) {
+        QString elided = fm.elidedText(text(), Qt::ElideMiddle, width());
+        QString oldText = text();
+        setText(elided);
+        QLabel::paintEvent(event);
+        setText(oldText);
+    } else {
+        QLabel::paintEvent(event);
+    }
 }
 

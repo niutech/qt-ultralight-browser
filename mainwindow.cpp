@@ -4,6 +4,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->setAttribute(Qt::WA_DeleteOnClose);
 
     QString home("https://duckduckgo.com/");
 
@@ -61,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 }
 
 MainWindow::~MainWindow() {
+    app_->Quit();
     app_ = nullptr;
     delete ui;
 }
@@ -117,7 +119,6 @@ void MainWindow::closeTab(int index) {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    app_->Quit();
     exit(0);
 }
 

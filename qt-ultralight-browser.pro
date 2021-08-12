@@ -1,6 +1,6 @@
-QT += core gui
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT += core gui network widgets printsupport
+qtHaveModule(uitools):!embedded: QT += uitools
+else: DEFINES += QT_NO_UITOOLS
 
 CONFIG += c++11 file_copies
 
@@ -15,21 +15,101 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+VERSION = 0.0.1
+
+DEFINES += \
+    "DEVELOPER_NAME=\"\\\"Niu Tech\\\"\"" \
+    "APP_NAME=\"\\\"Qt Ultralight Browser\\\"\"" \
+    "APP_VERSION=\"\\\"$${VERSION}\\\"\""
+
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
-    qultralight.cpp
+    autosaver.cpp \
+    bookmarks.cpp \
+    browserapplication.cpp \
+    browsermainwindow.cpp \
+    chasewidget.cpp \
+    cookiejar.cpp \
+    downloadmanager.cpp \
+    edittableview.cpp \
+    edittreeview.cpp \
+    history.cpp \
+    modelmenu.cpp \
+    networkaccessmanager.cpp \
+    qultralightframe.cpp \
+    qultralighthistory.cpp \
+    qultralightpage.cpp \
+    qultralightsettings.cpp \
+    qultralightview.cpp \
+    searchlineedit.cpp \
+    settings.cpp \
+    squeezelabel.cpp \
+    tabwidget.cpp \
+    toolbarsearch.cpp \
+    urllineedit.cpp \
+    webview.cpp \
+    xbel.cpp \
+    main.cpp
 
 HEADERS += \
-    mainwindow.h \
-    qultralight.h
+    autosaver.h \
+    bookmarks.h \
+    browserapplication.h \
+    browsermainwindow.h \
+    chasewidget.h \
+    cookiejar.h \
+    downloadmanager.h \
+    edittableview.h \
+    edittreeview.h \
+    history.h \
+    modelmenu.h \
+    networkaccessmanager.h \
+    qultralightframe.h \
+    qultralighthistory.h \
+    qultralightpage.h \
+    qultralightsettings.h \
+    qultralightview.h \
+    searchlineedit.h \
+    settings.h \
+    squeezelabel.h \
+    tabwidget.h \
+    toolbarsearch.h \
+    urllineedit.h \
+    webview.h \
+    xbel.h
 
 FORMS += \
-    mainwindow.ui
+    addbookmarkdialog.ui \
+    bookmarks.ui \
+    cookies.ui \
+    cookiesexceptions.ui \
+    downloaditem.ui \
+    downloads.ui \
+    history.ui \
+    passworddialog.ui \
+    proxy.ui \
+    settings.ui
+
+RESOURCES += data/data.qrc htmls/htmls.qrc
+
+build_all:!build_pass {
+    CONFIG -= build_all
+    CONFIG += release
+}
+
+win32 {
+   RC_FILE = browser.rc
+}
+
+mac {
+    ICON = browser.icns
+    QMAKE_INFO_PLIST = Info_mac.plist
+    TARGET = Browser
+}
+
+EXAMPLE_FILES = Info_mac.plist browser.icns browser.ico browser.rc
 
 # Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
+unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 ULTRALIGHT_PATH = ../ultralight
