@@ -167,15 +167,16 @@ BrowserApplication::BrowserApplication(int &argc, char **argv)
             this, SLOT(lastWindowClosed()));
 #endif
 
-    QTimer::singleShot(0, this, SLOT(postLaunch()));
+    //Ultralight
+    ultralight::Settings _settings;
+    _settings.developer_name = DEVELOPER_NAME;
+    _settings.app_name = APP_NAME;
+    ultralight::Config _config;
+    _config.memory_cache_size = 128 * 1024 * 1024;
+    _config.page_cache_size = 2;
+    app = ultralight::App::Create(_settings, _config);
 
-    // Ultralight
-    QString home("https://duckduckgo.com/");
-    ultralight::Settings settings_;
-    settings_.developer_name = DEVELOPER_NAME;
-    settings_.app_name = APP_NAME;
-    app = ultralight::App::Create(settings_);
-    app->Run();
+    QTimer::singleShot(0, this, SLOT(postLaunch()));
 }
 
 BrowserApplication::~BrowserApplication()
@@ -188,7 +189,7 @@ BrowserApplication::~BrowserApplication()
     delete s_networkAccessManager;
     delete s_bookmarksManager;
 
-    // Ultralight
+    //Ultralight
     app->Quit();
 }
 
@@ -411,6 +412,8 @@ BrowserMainWindow *BrowserApplication::newMainWindow()
     BrowserMainWindow *browser = new BrowserMainWindow();
     m_mainWindows.prepend(browser);
     browser->show();
+    if (!app->is_running())
+        app->Run();
     return browser;
 }
 
@@ -495,4 +498,3 @@ QIcon BrowserApplication::icon(const QUrl &url) const
         m_defaultIcon = QIcon(QLatin1String(":defaulticon.png"));
     return m_defaultIcon.pixmap(16, 16);
 }
-

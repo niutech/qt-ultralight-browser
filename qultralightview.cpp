@@ -19,6 +19,9 @@
 
 #include "qultralightview.h"
 #include "browserapplication.h"
+#include "browsermainwindow.h"
+#include "tabwidget.h"
+#include "webview.h"
 
 #include <QWindow>
 
@@ -31,10 +34,9 @@ QUltralightView::QUltralightView(QWidget *parent) : QWidget(parent)
 
     //Ultralight
     _window = ultralight::Window::Create(BrowserApplication::instance()->app->main_monitor(), 0, 0, false, ultralight::kWindowFlags_Hidden);
-    page()->_overlay = ultralight::Overlay::Create(*_window.get(), 0, 0, 0, 0);
-    page()->_overlay->Resize(_window->width(), _window->height());
-    page()->_overlay->view()->set_load_listener(this);
-    page()->_overlay->view()->set_view_listener(this);
+    _overlay = ultralight::Overlay::Create(*_window.get(), _window->width(), _window->height(), 0, 0);
+    _overlay->view()->set_load_listener(this);
+    _overlay->view()->set_view_listener(this);
     _window->set_listener(this);
 
     QWidget *webview = createWindowContainer(QWindow::fromWinId((unsigned long) _window->native_handle()), this);
@@ -46,8 +48,8 @@ QUltralightView::QUltralightView(QWidget *parent) : QWidget(parent)
 
 QUltralightView::~QUltralightView()
 {
-    page()->_overlay->view()->set_load_listener(nullptr);
-    page()->_overlay->view()->set_view_listener(nullptr);
+    _overlay->view()->set_load_listener(nullptr);
+    _overlay->view()->set_view_listener(nullptr);
     _window->set_listener(nullptr);
     _window->Close();
 }
@@ -95,8 +97,8 @@ void QUltralightView::setPage(QUltralightPage* page)
 
         connect(_page, SIGNAL(microFocusChanged()),
             this, SLOT(updateMicroFocus()));
-        connect(_page, SIGNAL(destroyed()),
-            this, SLOT(_q_pageDestroyed()));
+//        connect(_page, SIGNAL(destroyed()),
+//            this, SLOT(_q_pageDestroyed()));
     }
     setAttribute(Qt::WA_OpaquePaintEvent, _page);
     update();
@@ -386,7 +388,8 @@ void QUltralightView::wheelEvent(QWheelEvent* ev)
 
 void QUltralightView::keyPressEvent(QKeyEvent* ev)
 {
-    page()->event(ev);
+//    page()->event(ev);
+    sendKey(ev);
     if (!ev->isAccepted())
         QWidget::keyPressEvent(ev);
 }
@@ -460,12 +463,7 @@ void QUltralightView::changeEvent(QEvent *e)
     QWidget::changeEvent(e);
 }
 
-//ultralight::RefPtr<ultralight::Window> QUltralightView::ulWindow() const
-//{
-//    return _window;
-//}
-
-int QUltralightView::QtModsToUltralightMods(int mods)
+int QUltralightView::QtModsToUlMods(int mods)
 {
     int result = 0;
     if (mods & Qt::AltModifier)
@@ -479,7 +477,7 @@ int QUltralightView::QtModsToUltralightMods(int mods)
     return result;
 }
 
-int QUltralightView::QtKeyCodeToUltralightKeyCode(int key)
+int QUltralightView::QtKeyCodeToUlKeyCode(int key)
 {
     using namespace ultralight::KeyCodes;
     switch (key) {
@@ -584,9 +582,29 @@ int QUltralightView::QtKeyCodeToUltralightKeyCode(int key)
     }
 }
 
+QString QUltralightView::ulStringToQString(const ultralight::String string)
+{
+    return QString::fromUtf8(string.utf8().data());
+}
+
+QUrl QUltralightView::ulStringToQUrl(const ultralight::String string)
+{
+    return QUrl(ulStringToQString(string));
+}
+
+ultralight::String QUltralightView::QStringToUlString(const QString string)
+{
+    return (ultralight::String8) string.toUtf8().constData();
+}
+
+ultralight::String QUltralightView::QUrlToUlString(const QUrl url)
+{
+    return QStringToUlString(url.toString());
+}
+
 void QUltralightView::OnResize(ultralight::Window *window, uint32_t width_px, uint32_t height_px)
 {
-    page()->_overlay->Resize(width_px, height_px);
+    _overlay->Resize(width_px, height_px);
 }
 
 void QUltralightView::OnClose(ultralight::Window *window)
@@ -598,18 +616,86 @@ void QUltralightView::OnChangeCursor(ultralight::View* caller, ultralight::Curso
     _window->SetCursor(cursor);
 }
 
+void QUltralightView::OnChangeTitle(ultralight::View *caller, const ultralight::String &title)
+{
+    emit page()->mainFrame()->titleChanged(ulStringToQString(title));
+}
+
+void QUltralightView::OnChangeURL(ultralight::View *caller, const ultralight::String &url)
+{
+    emit page()->mainFrame()->urlChanged(ulStringToQUrl(url));
+}
+
+void QUltralightView::OnChangeTooltip(ultralight::View *caller, const ultralight::String &tooltip)
+{
+    emit page()->statusBarMessage(ulStringToQString(tooltip));
+}
+
+void QUltralightView::OnAddConsoleMessage(ultralight::View *caller, ultralight::MessageSource source, ultralight::MessageLevel level, const ultralight::String &message, uint32_t line_number, uint32_t column_number, const ultralight::String &source_id)
+{
+    if (level == ultralight::MessageLevel::kMessageLevel_Log || level == ultralight::MessageLevel::kMessageLevel_Info)
+        qInfo() << ulStringToQString(message);
+    else if (level == ultralight::MessageLevel::kMessageLevel_Debug)
+        qDebug() << ulStringToQString(message);
+    else if (level == ultralight::MessageLevel::kMessageLevel_Warning)
+        qWarning() << ulStringToQString(message);
+    else if (level == ultralight::MessageLevel::kMessageLevel_Error)
+        qCritical() << ulStringToQString(message);
+}
+
+ultralight::RefPtr<ultralight::View> QUltralightView::OnCreateChildView(ultralight::View *caller, const ultralight::String &opener_url, const ultralight::String &target_url, bool is_popup, const ultralight::IntRect &popup_rect)
+{
+    WebView *webView = BrowserApplication::instance()->mainWindow()->tabWidget()->newTab(true);
+    webView->load(ulStringToQUrl(target_url));
+    return webView->_overlay->view();
+}
+
+void QUltralightView::OnBeginLoading(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
+{
+    if (is_main_frame)
+        emit page()->mainFrame()->loadStarted();
+}
+
+void QUltralightView::OnFinishLoading(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
+{
+    if (is_main_frame) {
+        emit page()->loadProgress(100);
+        emit page()->mainFrame()->loadFinished(true);
+    }
+}
+
+void QUltralightView::OnFailLoading(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url, const ultralight::String &description, const ultralight::String &error_domain, int error_code)
+{
+    qCritical() << "ERROR" << error_code << "(" << ulStringToQString(error_domain) << ")" << ulStringToQString(description) << "while loading" << ulStringToQUrl(url).toString();
+    if (is_main_frame)
+        emit page()->loadProgress(100);
+        emit page()->mainFrame()->loadFinished(false);
+}
+
+void QUltralightView::OnWindowObjectReady(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
+{
+}
+
+void QUltralightView::OnDOMReady(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
+{
+}
+
+void QUltralightView::OnUpdateHistory(ultralight::View *caller)
+{
+}
+
 void QUltralightView::sendKey(QKeyEvent *event)
 {
     ultralight::KeyEvent evt;
     evt.type = ultralight::KeyEvent::kType_RawKeyDown;
-    evt.virtual_key_code = QtKeyCodeToUltralightKeyCode(event->key());
+    evt.virtual_key_code = QtKeyCodeToUlKeyCode(event->key());
     evt.native_key_code = event->nativeScanCode();
     GetKeyIdentifierFromVirtualKeyCode(event->nativeVirtualKey(), evt.key_identifier);
-    evt.modifiers = QtModsToUltralightMods(event->modifiers());
-    page()->_overlay->view()->FireKeyEvent(evt);
+    evt.modifiers = QtModsToUlMods(event->modifiers());
+    _overlay->view()->FireKeyEvent(evt);
     // Support typing chars
     evt.type = ultralight::KeyEvent::kType_Char;
     evt.text = (ultralight::String8) event->text().toUtf8().constData();
     evt.unmodified_text = evt.text;
-    page()->_overlay->view()->FireKeyEvent(evt);
+    _overlay->view()->FireKeyEvent(evt);
 }

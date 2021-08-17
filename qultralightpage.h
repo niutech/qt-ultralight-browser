@@ -23,8 +23,8 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qurl.h>
 #include <QtWidgets/qwidget.h>
-#include <AppCore/AppCore.h>
 #include "qultralightframe.h"
+#include "qultralightsettings.h"
 
 QT_BEGIN_NAMESPACE
 class QNetworkProxy;
@@ -37,8 +37,9 @@ class QScreen;
 QT_END_NAMESPACE
 
 class QWebElement;
-class QUltralightFrame;
 class QWebNetworkRequest;
+class QUltralightView;
+class QUltralightFrame;
 class QUltralightHistory;
 class QUltralightSettings;
 
@@ -47,8 +48,6 @@ class QUltralightFrameData;
 class QUltralightHistoryItem;
 class QUltralightHitTestResult;
 class QWebNetworkInterface;
-class QUltralightPageAdapter;
-//class QUltralightPagePrivate;
 class QWebPluginFactory;
 class QWebSecurityOrigin;
 class QtViewportAttributesPrivate;
@@ -92,30 +91,62 @@ public:
         NavigationTypeOther
     };
 
-    enum WebAction {
-        NoWebAction = - 1,
-
+    enum struct MenuAction {
+        NoAction = - 1,
         OpenLink,
-
         OpenLinkInNewWindow,
-        OpenFrameInNewWindow,
-
+        OpenLinkInThisWindow,
         DownloadLinkToDisk,
         CopyLinkToClipboard,
-
         OpenImageInNewWindow,
         DownloadImageToDisk,
         CopyImageToClipboard,
-
+        CopyImageUrlToClipboard,
+        OpenFrameInNewWindow,
+        Copy,
         Back,
         Forward,
         Stop,
         Reload,
+        Cut,
+        Paste,
+        Undo,
+        Redo,
+        SetTextDirectionDefault,
+        SetTextDirectionLeftToRight,
+        SetTextDirectionRightToLeft,
+        ToggleBold,
+        ToggleItalic,
+        ToggleUnderline,
+        SelectAll,
+        DownloadMediaToDisk,
+        CopyMediaUrlToClipboard,
+        ToggleMediaControls,
+        ToggleMediaLoop,
+        ToggleMediaPlayPause,
+        ToggleMediaMute,
+        ToggleVideoFullscreen,
+        InspectElement,
+        ActionCount
+    };
 
+    enum WebAction {
+        NoWebAction = - 1,
+        OpenLink,
+        OpenLinkInNewWindow,
+        OpenFrameInNewWindow,
+        DownloadLinkToDisk,
+        CopyLinkToClipboard,
+        OpenImageInNewWindow,
+        DownloadImageToDisk,
+        CopyImageToClipboard,
+        Back,
+        Forward,
+        Stop,
+        Reload,
         Cut,
         Copy,
         Paste,
-
         Undo,
         Redo,
         MoveToNextChar,
@@ -144,26 +175,19 @@ public:
         SelectEndOfDocument,
         DeleteStartOfWord,
         DeleteEndOfWord,
-
         SetTextDirectionDefault,
         SetTextDirectionLeftToRight,
         SetTextDirectionRightToLeft,
-
         ToggleBold,
         ToggleItalic,
         ToggleUnderline,
-
         InspectElement,
-
         InsertParagraphSeparator,
         InsertLineSeparator,
-
         SelectAll,
         ReloadAndBypassCache,
-
         PasteAndMatchStyle,
         RemoveFormat,
-
         ToggleStrikethrough,
         ToggleSubscript,
         ToggleSuperscript,
@@ -171,18 +195,13 @@ public:
         InsertOrderedList,
         Indent,
         Outdent,
-
         AlignCenter,
         AlignJustified,
         AlignLeft,
         AlignRight,
-
         StopScheduledPageRefresh,
-
         CopyImageUrlToClipboard,
-
         OpenLinkInThisWindow,
-
         DownloadMediaToDisk,
         CopyMediaUrlToClipboard,
         ToggleMediaControls,
@@ -190,11 +209,8 @@ public:
         ToggleMediaPlayPause,
         ToggleMediaMute,
         ToggleVideoFullscreen,
-
         RequestClose,
-
         Unselect,
-
         WebActionCount
     };
 
@@ -309,9 +325,9 @@ public:
     QWidget *view() const;
 
     bool isModified() const;
-//#ifndef QT_NO_UNDOSTACK
-//    QUndoStack *undoStack() const;
-//#endif
+#ifndef QT_NO_UNDOSTACK
+    QUndoStack *undoStack() const;
+#endif
 
     void setNetworkAccessManager(QNetworkAccessManager *manager);
     QNetworkAccessManager *networkAccessManager() const;
@@ -423,12 +439,7 @@ public:
     virtual bool extension(Extension extension, const ExtensionOption *option = Q_NULLPTR, ExtensionReturn *output = Q_NULLPTR);
     virtual bool supportsExtension(Extension extension) const;
 
-    //QUltralightPageAdapter* handle() const;
-
     virtual bool shouldInterruptJavaScript();
-
-    //Ultralight
-    //ultralight::RefPtr<ultralight::Overlay> ulOverlay() const;
 
 Q_SIGNALS:
     void loadStarted();
@@ -486,32 +497,18 @@ protected:
     virtual QString userAgentForUrl(const QUrl& url) const;
 
 private:
-    //Q_PRIVATE_SLOT(d, void _q_onLoadProgressChanged(int))
-//#ifndef QT_NO_ACTION
-    //Q_PRIVATE_SLOT(d, void _q_webActionTriggered(bool checked))
-    //Q_PRIVATE_SLOT(d, void _q_customActionTriggered(bool checked))
-//#endif
-    //Q_PRIVATE_SLOT(d, void _q_cleanupLeakMessages())
-    //Q_PRIVATE_SLOT(d, void _q_updateScreen(QScreen*))
-
-    //QUltralightPagePrivate *d;
-
     QWidget *_view;
     QUltralightFrame *_mainFrame;
     QUltralightHistory *_history;
     QUltralightSettings *_settings;
-
-    // Ultralight
-    ultralight::RefPtr<ultralight::Overlay> _overlay;
+    QUltralightHitTestResult *_hitTestResult;
+    QUndoStack *_undoStack;
 
     friend class QUltralightFrame;
     //friend class QWebFullScreenRequest;
-    //friend class QUltralightPagePrivate;
     friend class QUltralightView;
     friend class QUltralightHistory;
-    //friend class QUltralightViewPrivate;
     //friend class QGraphicsWebView;
-    //friend class QGraphicsWebViewPrivate;
     //friend class QWebInspector;
     friend class WebCore::ChromeClientQt;
     friend class WebCore::EditorClientQt;

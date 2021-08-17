@@ -40,10 +40,8 @@ class QPrinter;
 QT_END_NAMESPACE
 
 class QWebNetworkRequest;
-class QUltralightFrameAdapter;
-//class QUltralightFramePrivate;
 class QUltralightPage;
-class QUltralightPageAdapter;
+class QUltralightView;
 //class QUltralightHitTestResult;
 class QWebHistoryItem;
 class QWebSecurityOrigin;
@@ -103,7 +101,6 @@ public:
 
 private:
     friend class QUltralightFrame;
-    //friend class QUltralightPagePrivate;
     friend class QUltralightPage;
 
     QPoint _pos;
@@ -207,11 +204,7 @@ public:
 
     bool event(QEvent *) Q_DECL_OVERRIDE;
 
-    QWebSecurityOrigin securityOrigin() const;
-    //QUltralightFrameAdapter* handle() const;
-
-    //Ultralight
-    //ultralight::RefPtr<ultralight::View> ulView() const;
+    //QWebSecurityOrigin securityOrigin() const;
 
 public Q_SLOTS:
     QVariant evaluateJavaScript(const QString& scriptSource);
@@ -240,25 +233,16 @@ Q_SIGNALS:
 private:
     //friend class QGraphicsWebView;
     friend class QUltralightPage;
-    //friend class QUltralightPagePrivate;
-    //friend class QUltralightFramePrivate;
     friend class DumpRenderTreeSupportQt;
     friend class WebCore::WidgetPrivate;
     friend class WebCore::FrameLoaderClientQt;
     friend class WebCore::ChromeClientQt;
     friend class WebCore::TextureMapperLayerClientQt;
     friend class WebKit::InspectorClientWebPage;
-    //QUltralightFramePrivate *d;
-    //Q_PRIVATE_SLOT(d, void _q_orientationChanged())
 
     QUltralightPage *_page;
+    QUltralightView *_view;
 
-    // Ultralight
-    ultralight::RefPtr<ultralight::View> _view;
-    QString ulStringToQString(const ultralight::String string) const;
-    QUrl ulStringToQUrl(const ultralight::String string) const;
-    ultralight::String QStringToUlString(const QString string) const;
-    ultralight::String QUrlToUlString(const QUrl url) const;
     QUrl ensureAbsoluteUrl(const QUrl&);
 
 };

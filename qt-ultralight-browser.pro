@@ -2,6 +2,8 @@ QT += core gui network widgets printsupport
 qtHaveModule(uitools):!embedded: QT += uitools
 else: DEFINES += QT_NO_UITOOLS
 
+DEFINES += QT_NO_OPENSSL QT_NO_UNDOSTACK
+
 CONFIG += c++11 file_copies
 
 # The following define makes your compiler emit warnings if you use
@@ -15,7 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-VERSION = 0.0.1
+VERSION = 1.0
 
 DEFINES += \
     "DEVELOPER_NAME=\"\\\"Niu Tech\\\"\"" \

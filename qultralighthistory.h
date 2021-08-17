@@ -20,7 +20,7 @@
 #ifndef QULTRALIGHTHISTORY_H
 #define QULTRALIGHTHISTORY_H
 
-#include "qultralightpage.h"
+#include "qultralightview.h"
 
 #include <QtCore/qurl.h>
 #include <QtCore/qstring.h>
@@ -29,6 +29,7 @@
 #include <QtGui/qicon.h>
 #include <QVariant>
 
+class QUltralightView;
 class QUltralightPage;
 
 namespace WebCore {
@@ -126,7 +127,6 @@ private:
     ~QUltralightHistory();
 
     friend class QUltralightPage;
-//    friend class QUltralightPageAdapter;
     friend QDataStream& operator>>(QDataStream&, QUltralightHistory&);
     friend QDataStream& operator<<(QDataStream&, const QUltralightHistory&);
 
@@ -134,6 +134,7 @@ private:
 
     QList<QUltralightHistoryItem> _items;
     QUltralightPage *_page;
+    QUltralightView *_view;
 };
 
 QDataStream& operator<<(QDataStream& stream, const QUltralightHistory& history);

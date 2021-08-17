@@ -53,6 +53,7 @@ class CookieJar;
 class DownloadManager;
 class HistoryManager;
 class NetworkAccessManager;
+
 class BrowserApplication : public QApplication
 {
     Q_OBJECT
@@ -78,12 +79,12 @@ public:
     static NetworkAccessManager *networkAccessManager();
     static BookmarksManager *bookmarksManager();
 
-    // Ultralight
-    ultralight::RefPtr<ultralight::App> app;
-
 #if defined(Q_OS_OSX)
     bool event(QEvent *event);
 #endif
+
+    // Ultralight
+    ultralight::RefPtr<ultralight::App> app;
 
 public slots:
     BrowserMainWindow *newMainWindow();

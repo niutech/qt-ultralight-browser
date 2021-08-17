@@ -1,11 +1,11 @@
 Qt Ultralight Browser
 =====================
 
-This is an ultra-lightweight web browser powered by the [Ultralight](https://ultralig.ht/) web engine embedded in [Qt 5](https://www.qt.io/) app as a custom webview widget - **QUltralight (Qt Ultralight)** - a lightweight replacement for QWebEngineView (Qt WebEngine) and QWebView (Qt WebKit). The project is at very early stage, so it may be unstable.
+This is an ultra-lightweight web browser powered by the [Ultralight](https://ultralig.ht/) web engine embedded in [Qt 5](https://www.qt.io/) app as a custom webview widget - **QUltralight (Qt Ultralight)** - a lightweight replacement for Qt WebKit. The project is at very early stage, so it may be unstable.
 
 Here is the screenshot:
 
-![Qt Ultralight Browser](https://i.imgur.com/pl5bcXP.png)
+![Qt Ultralight Browser](https://i.imgur.com/xBSjyXL.png)
 
 Qt Ultralight Browser is very lightweight, it uses only 68 MB of RAM after loading the homepage (DuckDuckGo) and it provides GPU rendering on supported hardware:
 

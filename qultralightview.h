@@ -29,6 +29,7 @@
 #include <QKeyEvent>
 #include <AppCore/AppCore.h>
 #include "qultralightpage.h"
+//#include "qultralightframe.h"
 #include "qultralighthistory.h"
 #include "qultralightsettings.h"
 
@@ -38,9 +39,8 @@ class QPrinter;
 QT_END_NAMESPACE
 
 class QUltralightPage;
-//class QUltralightViewPrivate;
+class QUltralightFrame;
 class QWebNetworkRequest;
-
 
 class QUltralightView : public QWidget,
         public ultralight::WindowListener,
@@ -114,9 +114,6 @@ public:
 
     bool event(QEvent*) Q_DECL_OVERRIDE;
 
-    //Ultralight
-    //ultralight::RefPtr<ultralight::Window> ulWindow() const;
-
 public Q_SLOTS:
     void stop();
     void back();
@@ -170,16 +167,34 @@ protected:
 
 private:
     QUltralightPage* _page;
+
     // Ultralight
     ultralight::RefPtr<ultralight::Window> _window;
-    static int QtModsToUltralightMods(int mods);
-    static int QtKeyCodeToUltralightKeyCode(int key);
+    ultralight::RefPtr<ultralight::Overlay> _overlay;
+    static int QtModsToUlMods(int mods);
+    static int QtKeyCodeToUlKeyCode(int key);
+    static QString ulStringToQString(const ultralight::String string);
+    static QUrl ulStringToQUrl(const ultralight::String string);
+    static ultralight::String QStringToUlString(const QString string);
+    static ultralight::String QUrlToUlString(const QUrl url);
     void OnResize(ultralight::Window* window, uint32_t width_px, uint32_t height_px) Q_DECL_OVERRIDE;
     void OnClose(ultralight::Window* window) Q_DECL_OVERRIDE;
     void OnChangeCursor(ultralight::View* caller, ultralight::Cursor cursor) Q_DECL_OVERRIDE;
+    void OnChangeTitle(ultralight::View* caller, const ultralight::String& title) Q_DECL_OVERRIDE;
+    void OnChangeURL(ultralight::View* caller, const ultralight::String& url) Q_DECL_OVERRIDE;
+    void OnChangeTooltip(ultralight::View* caller, const ultralight::String& tooltip) Q_DECL_OVERRIDE;
+    void OnAddConsoleMessage(ultralight::View* caller, ultralight::MessageSource source, ultralight::MessageLevel level,  const ultralight::String& message, uint32_t line_number, uint32_t column_number, const ultralight::String& source_id) Q_DECL_OVERRIDE;
+    ultralight::RefPtr<ultralight::View> OnCreateChildView(ultralight::View* caller, const ultralight::String& opener_url, const ultralight::String& target_url, bool is_popup, const ultralight::IntRect& popup_rect) Q_DECL_OVERRIDE;
+    void OnBeginLoading(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url) Q_DECL_OVERRIDE;
+    void OnFinishLoading(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url) Q_DECL_OVERRIDE;
+    void OnFailLoading(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url, const ultralight::String& description, const ultralight::String& error_domain, int error_code) Q_DECL_OVERRIDE;
+    void OnWindowObjectReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url) Q_DECL_OVERRIDE;
+    void OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const ultralight::String& url) Q_DECL_OVERRIDE;
+    void OnUpdateHistory(ultralight::View* caller) Q_DECL_OVERRIDE;
+
     friend class QUltralightPage;
-    //QUltralightViewPrivate* d;
-    //Q_PRIVATE_SLOT(d, void _q_pageDestroyed())
+    friend class QUltralightFrame;
+    friend class QUltralightHistory;
 };
 
 #endif // QULTRALIGHTVIEW_H

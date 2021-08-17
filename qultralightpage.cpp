@@ -20,33 +20,123 @@
 #include "qultralightpage.h"
 #include "qultralightview.h"
 
+#include <QAction>
 #include <QApplication>
+#include <QBitArray>
+#include <QClipboard>
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QMessageBox>
+#include <QStyle>
+#include <QUndoCommand>
 
 using namespace WebCore;
+
+static QUltralightPage::WebAction webActionForAdapterMenuAction(QUltralightPage::MenuAction action)
+{
+    switch (action) {
+    case QUltralightPage::MenuAction::OpenLink: return QUltralightPage::OpenLink;
+    case QUltralightPage::MenuAction::OpenLinkInNewWindow: return QUltralightPage::OpenLinkInNewWindow;
+    case QUltralightPage::MenuAction::OpenFrameInNewWindow: return QUltralightPage::OpenFrameInNewWindow;
+    case QUltralightPage::MenuAction::DownloadLinkToDisk: return QUltralightPage::DownloadLinkToDisk;
+    case QUltralightPage::MenuAction::CopyLinkToClipboard: return QUltralightPage::CopyLinkToClipboard;
+    case QUltralightPage::MenuAction::OpenImageInNewWindow: return QUltralightPage::OpenImageInNewWindow;
+    case QUltralightPage::MenuAction::DownloadImageToDisk: return QUltralightPage::DownloadImageToDisk;
+    case QUltralightPage::MenuAction::CopyImageToClipboard: return QUltralightPage::CopyImageToClipboard;
+    case QUltralightPage::MenuAction::Back: return QUltralightPage::Back;
+    case QUltralightPage::MenuAction::Forward: return QUltralightPage::Forward;
+    case QUltralightPage::MenuAction::Stop: return QUltralightPage::Stop;
+    case QUltralightPage::MenuAction::Reload: return QUltralightPage::Reload;
+    case QUltralightPage::MenuAction::Cut: return QUltralightPage::Cut;
+    case QUltralightPage::MenuAction::Copy: return QUltralightPage::Copy;
+    case QUltralightPage::MenuAction::Paste: return QUltralightPage::Paste;
+    case QUltralightPage::MenuAction::Undo: return QUltralightPage::Undo;
+    case QUltralightPage::MenuAction::Redo: return QUltralightPage::Redo;
+    case QUltralightPage::MenuAction::SetTextDirectionDefault: return QUltralightPage::SetTextDirectionDefault;
+    case QUltralightPage::MenuAction::SetTextDirectionLeftToRight: return QUltralightPage::SetTextDirectionLeftToRight;
+    case QUltralightPage::MenuAction::SetTextDirectionRightToLeft: return QUltralightPage::SetTextDirectionRightToLeft;
+    case QUltralightPage::MenuAction::ToggleBold: return QUltralightPage::ToggleBold;
+    case QUltralightPage::MenuAction::ToggleItalic: return QUltralightPage::ToggleItalic;
+    case QUltralightPage::MenuAction::ToggleUnderline: return QUltralightPage::ToggleUnderline;
+    case QUltralightPage::MenuAction::InspectElement: return QUltralightPage::InspectElement;
+    case QUltralightPage::MenuAction::SelectAll: return QUltralightPage::SelectAll;
+    case QUltralightPage::MenuAction::CopyImageUrlToClipboard: return QUltralightPage::CopyImageUrlToClipboard;
+    case QUltralightPage::MenuAction::OpenLinkInThisWindow: return QUltralightPage::OpenLinkInThisWindow;
+    case QUltralightPage::MenuAction::DownloadMediaToDisk: return QUltralightPage::DownloadMediaToDisk;
+    case QUltralightPage::MenuAction::CopyMediaUrlToClipboard: return QUltralightPage::CopyMediaUrlToClipboard;
+    case QUltralightPage::MenuAction::ToggleMediaControls: return QUltralightPage::ToggleMediaControls;
+    case QUltralightPage::MenuAction::ToggleMediaLoop: return QUltralightPage::ToggleMediaLoop;
+    case QUltralightPage::MenuAction::ToggleMediaPlayPause: return QUltralightPage::ToggleMediaPlayPause;
+    case QUltralightPage::MenuAction::ToggleMediaMute: return QUltralightPage::ToggleMediaMute;
+    case QUltralightPage::MenuAction::ToggleVideoFullscreen: return QUltralightPage::ToggleVideoFullscreen;
+    case QUltralightPage::MenuAction::ActionCount: return QUltralightPage::WebActionCount;
+    default:
+        Q_UNREACHABLE();
+        break;
+    }
+    return QUltralightPage::NoWebAction;
+}
+
+static QUltralightPage::MenuAction adapterMenuActionForWebAction(QUltralightPage::WebAction action)
+{
+    switch (action) {
+    case QUltralightPage::OpenLink: return QUltralightPage::MenuAction::OpenLink;
+    case QUltralightPage::OpenLinkInNewWindow: return QUltralightPage::MenuAction::OpenLinkInNewWindow;
+    case QUltralightPage::OpenFrameInNewWindow: return QUltralightPage::MenuAction::OpenFrameInNewWindow;
+    case QUltralightPage::DownloadLinkToDisk: return QUltralightPage::MenuAction::DownloadLinkToDisk;
+    case QUltralightPage::CopyLinkToClipboard: return QUltralightPage::MenuAction::CopyLinkToClipboard;
+    case QUltralightPage::OpenImageInNewWindow: return QUltralightPage::MenuAction::OpenImageInNewWindow;
+    case QUltralightPage::DownloadImageToDisk: return QUltralightPage::MenuAction::DownloadImageToDisk;
+    case QUltralightPage::CopyImageToClipboard: return QUltralightPage::MenuAction::CopyImageToClipboard;
+    case QUltralightPage::Back: return QUltralightPage::MenuAction::Back;
+    case QUltralightPage::Forward: return QUltralightPage::MenuAction::Forward;
+    case QUltralightPage::Stop: return QUltralightPage::MenuAction::Stop;
+    case QUltralightPage::Reload: return QUltralightPage::MenuAction::Reload;
+    case QUltralightPage::Cut: return QUltralightPage::MenuAction::Cut;
+    case QUltralightPage::Copy: return QUltralightPage::MenuAction::Copy;
+    case QUltralightPage::Paste: return QUltralightPage::MenuAction::Paste;
+    case QUltralightPage::Undo: return QUltralightPage::MenuAction::Undo;
+    case QUltralightPage::Redo: return QUltralightPage::MenuAction::Redo;
+    case QUltralightPage::SetTextDirectionDefault: return QUltralightPage::MenuAction::SetTextDirectionDefault;
+    case QUltralightPage::SetTextDirectionLeftToRight: return QUltralightPage::MenuAction::SetTextDirectionLeftToRight;
+    case QUltralightPage::SetTextDirectionRightToLeft: return QUltralightPage::MenuAction::SetTextDirectionRightToLeft;
+    case QUltralightPage::ToggleBold: return QUltralightPage::MenuAction::ToggleBold;
+    case QUltralightPage::ToggleItalic: return QUltralightPage::MenuAction::ToggleItalic;
+    case QUltralightPage::ToggleUnderline: return QUltralightPage::MenuAction::ToggleUnderline;
+    case QUltralightPage::InspectElement: return QUltralightPage::MenuAction::InspectElement;
+    case QUltralightPage::SelectAll: return QUltralightPage::MenuAction::SelectAll;
+    case QUltralightPage::CopyImageUrlToClipboard: return QUltralightPage::MenuAction::CopyImageUrlToClipboard;
+    case QUltralightPage::OpenLinkInThisWindow: return QUltralightPage::MenuAction::OpenLinkInThisWindow;
+    case QUltralightPage::DownloadMediaToDisk: return QUltralightPage::MenuAction::DownloadMediaToDisk;
+    case QUltralightPage::CopyMediaUrlToClipboard: return QUltralightPage::MenuAction::CopyMediaUrlToClipboard;
+    case QUltralightPage::ToggleMediaControls: return QUltralightPage::MenuAction::ToggleMediaControls;
+    case QUltralightPage::ToggleMediaLoop: return QUltralightPage::MenuAction::ToggleMediaLoop;
+    case QUltralightPage::ToggleMediaPlayPause: return QUltralightPage::MenuAction::ToggleMediaPlayPause;
+    case QUltralightPage::ToggleMediaMute: return QUltralightPage::MenuAction::ToggleMediaMute;
+    case QUltralightPage::ToggleVideoFullscreen: return QUltralightPage::MenuAction::ToggleVideoFullscreen;
+    case QUltralightPage::WebActionCount: return QUltralightPage::MenuAction::ActionCount;
+    default:
+        Q_UNREACHABLE();
+        break;
+    }
+    return QUltralightPage::MenuAction::NoAction;
+}
 
 QUltralightPage::QUltralightPage(QObject *parent) : QObject(parent)
 {
     setView(qobject_cast<QWidget*>(parent));
-
     _history = new QUltralightHistory(this);
+    createMainFrame();
 
-//    connect(this, SIGNAL(loadProgress(int)), this, SLOT(_q_onLoadProgressChanged(int)));
-//#ifndef NDEBUG
-//    connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), this, SLOT(_q_cleanupLeakMessages()));
-//#endif
+    connect(mainFrame(), SIGNAL(loadStarted()), this, SIGNAL(loadStarted()));
+    connect(mainFrame(), SIGNAL(loadFinished(bool)), this, SIGNAL(loadFinished(bool)));
 }
 
 QUltralightPage::~QUltralightPage()
 {
-    delete _view;
-    delete _mainFrame;
-    delete _history;
-    delete _settings;
 }
 
 void QUltralightPage::createMainFrame()
@@ -273,56 +363,55 @@ static void collectChildFrames(QUltralightFrame* frame, QList<QUltralightFrame*>
 void QUltralightPage::triggerAction(WebAction action, bool)
 {
 //    const char *command = 0;
-//    QUltralightPageAdapter::MenuAction mappedAction = QUltralightPageAdapter::NoAction;
-//    QUltralightHitTestResultPrivate* hitTestResult = d->hitTestResult.d;
+    MenuAction mappedAction = MenuAction::NoAction;
 
-//    switch (action) {
-//    case OpenLink:
-//    case OpenLinkInNewWindow:
-//    case OpenLinkInThisWindow:
-//    case OpenFrameInNewWindow:
-//    case CopyLinkToClipboard:
-//    case OpenImageInNewWindow:
-//    case DownloadImageToDisk:
-//    case DownloadLinkToDisk:
-//    case Back:
-//    case Forward:
-//    case Stop:
-//    case Reload:
-//    case SetTextDirectionDefault:
-//    case SetTextDirectionLeftToRight:
-//    case SetTextDirectionRightToLeft:
-//    case DownloadMediaToDisk:
-//    case ToggleMediaControls:
-//    case ToggleMediaLoop:
-//    case ToggleMediaPlayPause:
-//    case ToggleMediaMute:
-//    case ToggleVideoFullscreen:
-//        mappedAction = adapterMenuActionForWebAction(action);
-//        break;
-//    case ReloadAndBypassCache: // Manual mapping
-//        mappedAction = QUltralightPageAdapter::Reload;
-//        break;
-//#ifndef QT_NO_CLIPBOARD
-//    case CopyImageToClipboard:
-//        QApplication::clipboard()->setPixmap(d->hitTestResult.pixmap());
-//        break;
-//    case CopyImageUrlToClipboard:
-//        QApplication::clipboard()->setText(d->hitTestResult.imageUrl().toString());
-//        break;
-//    case CopyMediaUrlToClipboard:
-//        QApplication::clipboard()->setText(d->hitTestResult.mediaUrl().toString());
-//        break;
-//#endif
-//    case InspectElement: {
-//        if (!d->hitTestResult.isNull()) {
-//            d->getOrCreateInspector(); // Make sure the inspector is created
-//            d->inspector->show(); // The inspector is expected to be shown on inspection
-//            mappedAction = QUltralightPageAdapter::InspectElement;
-//        }
-//        break;
-//    }
-//    case StopScheduledPageRefresh: {
+    switch (action) {
+    case OpenLink:
+    case OpenLinkInNewWindow:
+    case OpenLinkInThisWindow:
+    case OpenFrameInNewWindow:
+    case CopyLinkToClipboard:
+    case OpenImageInNewWindow:
+    case DownloadImageToDisk:
+    case DownloadLinkToDisk:
+    case Back:
+    case Forward:
+    case Stop:
+    case Reload:
+    case SetTextDirectionDefault:
+    case SetTextDirectionLeftToRight:
+    case SetTextDirectionRightToLeft:
+    case DownloadMediaToDisk:
+    case ToggleMediaControls:
+    case ToggleMediaLoop:
+    case ToggleMediaPlayPause:
+    case ToggleMediaMute:
+    case ToggleVideoFullscreen:
+        mappedAction = adapterMenuActionForWebAction(action);
+        break;
+    case ReloadAndBypassCache: // Manual mapping
+        mappedAction = MenuAction::Reload;
+        break;
+#ifndef QT_NO_CLIPBOARD
+    case CopyImageToClipboard:
+        QApplication::clipboard()->setPixmap(_hitTestResult->pixmap());
+        break;
+    case CopyImageUrlToClipboard:
+        QApplication::clipboard()->setText(_hitTestResult->imageUrl().toString());
+        break;
+    case CopyMediaUrlToClipboard:
+        QApplication::clipboard()->setText(_hitTestResult->mediaUrl().toString());
+        break;
+#endif
+    case InspectElement: {
+        if (!_hitTestResult->isNull()) {
+            mappedAction = MenuAction::InspectElement;
+            //Ultralight
+            qobject_cast<QUltralightView*>(view())->_overlay->view()->inspector()->Resize(qobject_cast<QUltralightView*>(view())->_overlay->width(), 400);
+        }
+        break;
+    }
+    case StopScheduledPageRefresh: {
 //        QUltralightFrame* topFrame = mainFrame();
 //        topFrame->d->cancelLoad();
 //        QList<QUltralightFrame*> childFrames;
@@ -330,30 +419,31 @@ void QUltralightPage::triggerAction(WebAction action, bool)
 //        QListIterator<QUltralightFrame*> it(childFrames);
 //        while (it.hasNext())
 //            it.next()->d->cancelLoad();
-//        break;
-//    }
-//    case RequestClose: {
+        mappedAction = MenuAction::Stop;
+        break;
+    }
+    case RequestClose: {
 //        bool success = d->tryClosePage();
 //        if (success)
-//            emit windowCloseRequested();
-//        break;
-//    }
-//    default:
-//        command = QUltralightPagePrivate::editorCommandForWebActions(action);
-//        break;
-//    }
-//    if (command || mappedAction != QUltralightPageAdapter::NoAction)
+            emit windowCloseRequested();
+        break;
+    }
+    default:
+//        command = QUltralightPage::editorCommandForWebActions(action);
+        break;
+    }
+//    if (command || mappedAction != MenuAction::NoAction)
 //        d->triggerAction(mappedAction, hitTestResult, command, /*endToEndReload*/ action == ReloadAndBypassCache);
 }
 
 QSize QUltralightPage::viewportSize() const
 {
-    return QSize(_overlay->width(), _overlay->height());
+    return QSize(qobject_cast<QUltralightView*>(view())->_overlay->width(), qobject_cast<QUltralightView*>(view())->_overlay->height());
 }
 
 void QUltralightPage::setViewportSize(const QSize &size) const
 {
-    _overlay->Resize(size.width(), size.height());
+    //qobject_cast<QUltralightView*>(view())->_overlay->Resize(size.width(), size.height());
 }
 
 void QUltralightPage::setDevicePixelRatio(qreal ratio)
@@ -512,238 +602,327 @@ QString QUltralightPage::selectedHtml() const
 #ifndef QT_NO_ACTION
 QAction *QUltralightPage::action(WebAction action) const
 {
-//    if (action == QUltralightPage::NoWebAction)
-//        return 0;
+    if (action == NoWebAction)
+        return 0;
 //    if (d->actions[action])
 //        return d->actions[action];
 
-//    QString text;
-//    QIcon icon;
-//    QStyle *style = d->client ? d->client->style() : qApp->style();
-//    bool checkable = false;
-//    QUltralightPageAdapter::MenuAction mappedAction = QUltralightPageAdapter::NoAction;
+    QString text;
+    QIcon icon;
+    QStyle *style = qApp->style();
+    bool checkable = false;
+    MenuAction mappedAction = MenuAction::NoAction;
 
-//    switch (action) {
-//    // to be fetched from LocalizedStringsQt via the page adapter
-//    case OpenLink:
-//    case OpenLinkInNewWindow:
-//    case OpenFrameInNewWindow:
-//    case OpenLinkInThisWindow:
-//    case DownloadLinkToDisk:
-//    case CopyLinkToClipboard:
-//    case OpenImageInNewWindow:
-//    case DownloadImageToDisk:
-//    case CopyImageToClipboard:
-//    case CopyImageUrlToClipboard:
-//    case Cut:
-//    case Copy:
-//    case Paste:
-//    case SelectAll:
-//    case SetTextDirectionDefault:
-//    case SetTextDirectionLeftToRight:
-//    case SetTextDirectionRightToLeft:
-//    case ToggleBold:
-//    case ToggleItalic:
-//    case ToggleUnderline:
-//    case DownloadMediaToDisk:
-//    case CopyMediaUrlToClipboard:
-//    case ToggleMediaControls:
-//    case ToggleMediaLoop:
-//    case ToggleMediaPlayPause:
-//    case ToggleMediaMute:
-//    case ToggleVideoFullscreen:
-//        mappedAction = adapterMenuActionForWebAction(action);
-//        break;
-//    case InspectElement:
-//        mappedAction = QUltralightPageAdapter::InspectElement;
-//        break;
+    switch (action) {
+    // to be fetched from LocalizedStringsQt via the page adapter
+    case OpenLink:
+        text = tr("Open link");
+        mappedAction = MenuAction::OpenLink;
+        break;
+    case OpenLinkInNewWindow:
+        text = tr("Open link in new window");
+        mappedAction = MenuAction::OpenLinkInNewWindow;
+        break;
+    case OpenFrameInNewWindow:
+        text = tr("Open frame in new window");
+        mappedAction = MenuAction::OpenFrameInNewWindow;
+        break;
+    case OpenLinkInThisWindow:
+        text = tr("Open link in this window");
+        mappedAction = MenuAction::OpenLinkInThisWindow;
+        break;
+    case DownloadLinkToDisk:
+        text = tr("Download link to disk");
+        mappedAction = MenuAction::DownloadLinkToDisk;
+        break;
+    case CopyLinkToClipboard:
+        text = tr("Copy link to clipboard");
+        mappedAction = MenuAction::CopyLinkToClipboard;
+        break;
+    case OpenImageInNewWindow:
+        text = tr("Open image in new window");
+        mappedAction = MenuAction::OpenImageInNewWindow;
+        break;
+    case DownloadImageToDisk:
+        text = tr("Download image to disk");
+        mappedAction = MenuAction::DownloadImageToDisk;
+        break;
+    case CopyImageToClipboard:
+        text = tr("Copy image to clipboard");
+        mappedAction = MenuAction::CopyImageToClipboard;
+        break;
+    case CopyImageUrlToClipboard:
+        text = tr("Copy image URL to clipboard");
+        mappedAction = MenuAction::CopyImageUrlToClipboard;
+        break;
+    case Cut:
+        text = tr("Cut");
+        mappedAction = MenuAction::Cut;
+        break;
+    case Copy:
+        text = tr("Copy");
+        mappedAction = MenuAction::Copy;
+        break;
+    case Paste:
+        text = tr("Paste");
+        mappedAction = MenuAction::Paste;
+        break;
+#ifdef QT_NO_UNDOSTACK
+    case Undo:
+        text = tr("Undo");
+        mappedAction = MenuAction::Undo;
+        break;
+    case Redo:
+        text = tr("Redo");
+        mappedAction = MenuAction::Redo;
+        break;
+#endif // QT_NO_UNDOSTACK
+    case SelectAll:
+        text = tr("Select all");
+        mappedAction = MenuAction::SelectAll;
+        break;
+    case SetTextDirectionDefault:
+        text = tr("Set text direction Default");
+        mappedAction = MenuAction::SetTextDirectionDefault;
+        break;
+    case SetTextDirectionLeftToRight:
+        text = tr("Set text direction Left To Right");
+        mappedAction = MenuAction::SetTextDirectionLeftToRight;
+        break;
+    case SetTextDirectionRightToLeft:
+        text = tr("Set text direction Right To Left");
+        mappedAction = MenuAction::SetTextDirectionRightToLeft;
+        break;
+    case ToggleBold:
+        text = tr("Toggle bold");
+        mappedAction = MenuAction::ToggleBold;
+        break;
+    case ToggleItalic:
+        text = tr("Toggle italic");
+        mappedAction = MenuAction::ToggleItalic;
+        break;
+    case ToggleUnderline:
+        text = tr("Toggle underline");
+        mappedAction = MenuAction::ToggleUnderline;
+        break;
+    case DownloadMediaToDisk:
+        text = tr("Download media to disk");
+        mappedAction = MenuAction::DownloadMediaToDisk;
+        break;
+    case CopyMediaUrlToClipboard:
+        text = tr("Copy media URL to clipboard");
+        mappedAction = MenuAction::CopyMediaUrlToClipboard;
+        break;
+    case ToggleMediaControls:
+        text = tr("Toggle media controls");
+        mappedAction = MenuAction::ToggleMediaControls;
+        break;
+    case ToggleMediaLoop:
+        text = tr("Toggle media loop");
+        mappedAction = MenuAction::ToggleMediaLoop;
+        break;
+    case ToggleMediaPlayPause:
+        text = tr("Toggle media play/pause");
+        mappedAction = MenuAction::ToggleMediaPlayPause;
+        break;
+    case ToggleMediaMute:
+        text = tr("Toggle media mute");
+        mappedAction = MenuAction::ToggleMediaMute;
+        break;
+    case ToggleVideoFullscreen:
+        text = tr("Toggle video fullscreen");
+        mappedAction = MenuAction::ToggleVideoFullscreen;
+        break;
+    case InspectElement:
+        text = tr("Inspect element");
+        mappedAction = MenuAction::InspectElement;
+        break;
+    case Back:
+        text = tr("Back");
+        mappedAction = MenuAction::Back;
+        icon = style->standardIcon(QStyle::SP_ArrowBack);
+        break;
+    case Forward:
+        text = tr("Forward");
+        mappedAction = MenuAction::Forward;
+        icon = style->standardIcon(QStyle::SP_ArrowForward);
+        break;
+    case Stop:
+        text = tr("Stop");
+        mappedAction = MenuAction::Stop;
+        icon = style->standardIcon(QStyle::SP_BrowserStop);
+        break;
+    case Reload:
+        text = tr("Reload");
+        mappedAction = MenuAction::Reload;
+        icon = style->standardIcon(QStyle::SP_BrowserReload);
+        break;
 
-//        // icon needed as well, map by hand.
-//    case Back:
-//        mappedAction = QUltralightPageAdapter::Back;
-//        icon = style->standardIcon(QStyle::SP_ArrowBack);
-//        break;
-//    case Forward:
-//        mappedAction = QUltralightPageAdapter::Forward;
-//        icon = style->standardIcon(QStyle::SP_ArrowForward);
-//        break;
-//    case Stop:
-//        mappedAction = QUltralightPageAdapter::Stop;
-//        icon = style->standardIcon(QStyle::SP_BrowserStop);
-//        break;
-//    case Reload:
-//        mappedAction = QUltralightPageAdapter::Reload;
-//        icon = style->standardIcon(QStyle::SP_BrowserReload);
-//        break;
-
-//#ifndef QT_NO_UNDOSTACK
-//    case Undo: {
-//        QAction *a = undoStack()->createUndoAction(d->q);
+#ifndef QT_NO_UNDOSTACK
+    case Undo: {
+        QAction *a = undoStack()->createUndoAction(const_cast<QUltralightPage *>(this));
 //        d->actions[action] = a;
-//        return a;
-//    }
-//    case Redo: {
-//        QAction *a = undoStack()->createRedoAction(d->q);
+        return a;
+    }
+    case Redo: {
+        QAction *a = undoStack()->createRedoAction(const_cast<QUltralightPage *>(this));
 //        d->actions[action] = a;
-//        return a;
-//    }
-//#endif // QT_NO_UNDOSTACK
-//        // in place l10n
-//        case MoveToNextChar:
-//            text = tr("Move the cursor to the next character");
-//            break;
-//        case MoveToPreviousChar:
-//            text = tr("Move the cursor to the previous character");
-//            break;
-//        case MoveToNextWord:
-//            text = tr("Move the cursor to the next word");
-//            break;
-//        case MoveToPreviousWord:
-//            text = tr("Move the cursor to the previous word");
-//            break;
-//        case MoveToNextLine:
-//            text = tr("Move the cursor to the next line");
-//            break;
-//        case MoveToPreviousLine:
-//            text = tr("Move the cursor to the previous line");
-//            break;
-//        case MoveToStartOfLine:
-//            text = tr("Move the cursor to the start of the line");
-//            break;
-//        case MoveToEndOfLine:
-//            text = tr("Move the cursor to the end of the line");
-//            break;
-//        case MoveToStartOfBlock:
-//            text = tr("Move the cursor to the start of the block");
-//            break;
-//        case MoveToEndOfBlock:
-//            text = tr("Move the cursor to the end of the block");
-//            break;
-//        case MoveToStartOfDocument:
-//            text = tr("Move the cursor to the start of the document");
-//            break;
-//        case MoveToEndOfDocument:
-//            text = tr("Move the cursor to the end of the document");
-//            break;
-//        case SelectNextChar:
-//            text = tr("Select to the next character");
-//            break;
-//        case SelectPreviousChar:
-//            text = tr("Select to the previous character");
-//            break;
-//        case SelectNextWord:
-//            text = tr("Select to the next word");
-//            break;
-//        case SelectPreviousWord:
-//            text = tr("Select to the previous word");
-//            break;
-//        case SelectNextLine:
-//            text = tr("Select to the next line");
-//            break;
-//        case SelectPreviousLine:
-//            text = tr("Select to the previous line");
-//            break;
-//        case SelectStartOfLine:
-//            text = tr("Select to the start of the line");
-//            break;
-//        case SelectEndOfLine:
-//            text = tr("Select to the end of the line");
-//            break;
-//        case SelectStartOfBlock:
-//            text = tr("Select to the start of the block");
-//            break;
-//        case SelectEndOfBlock:
-//            text = tr("Select to the end of the block");
-//            break;
-//        case SelectStartOfDocument:
-//            text = tr("Select to the start of the document");
-//            break;
-//        case SelectEndOfDocument:
-//            text = tr("Select to the end of the document");
-//            break;
-//        case DeleteStartOfWord:
-//            text = tr("Delete to the start of the word");
-//            break;
-//        case DeleteEndOfWord:
-//            text = tr("Delete to the end of the word");
-//            break;
+        return a;
+    }
+#endif // QT_NO_UNDOSTACK
+    // in place l10n
+    case MoveToNextChar:
+        text = tr("Move the cursor to the next character");
+        break;
+    case MoveToPreviousChar:
+        text = tr("Move the cursor to the previous character");
+        break;
+    case MoveToNextWord:
+        text = tr("Move the cursor to the next word");
+        break;
+    case MoveToPreviousWord:
+        text = tr("Move the cursor to the previous word");
+        break;
+    case MoveToNextLine:
+        text = tr("Move the cursor to the next line");
+        break;
+    case MoveToPreviousLine:
+        text = tr("Move the cursor to the previous line");
+        break;
+    case MoveToStartOfLine:
+        text = tr("Move the cursor to the start of the line");
+        break;
+    case MoveToEndOfLine:
+        text = tr("Move the cursor to the end of the line");
+        break;
+    case MoveToStartOfBlock:
+        text = tr("Move the cursor to the start of the block");
+        break;
+    case MoveToEndOfBlock:
+        text = tr("Move the cursor to the end of the block");
+        break;
+    case MoveToStartOfDocument:
+        text = tr("Move the cursor to the start of the document");
+        break;
+    case MoveToEndOfDocument:
+        text = tr("Move the cursor to the end of the document");
+        break;
+    case SelectNextChar:
+        text = tr("Select to the next character");
+        break;
+    case SelectPreviousChar:
+        text = tr("Select to the previous character");
+        break;
+    case SelectNextWord:
+        text = tr("Select to the next word");
+        break;
+    case SelectPreviousWord:
+        text = tr("Select to the previous word");
+        break;
+    case SelectNextLine:
+        text = tr("Select to the next line");
+        break;
+    case SelectPreviousLine:
+        text = tr("Select to the previous line");
+        break;
+    case SelectStartOfLine:
+        text = tr("Select to the start of the line");
+        break;
+    case SelectEndOfLine:
+        text = tr("Select to the end of the line");
+        break;
+    case SelectStartOfBlock:
+        text = tr("Select to the start of the block");
+        break;
+    case SelectEndOfBlock:
+        text = tr("Select to the end of the block");
+        break;
+    case SelectStartOfDocument:
+        text = tr("Select to the start of the document");
+        break;
+    case SelectEndOfDocument:
+        text = tr("Select to the end of the document");
+        break;
+    case DeleteStartOfWord:
+        text = tr("Delete to the start of the word");
+        break;
+    case DeleteEndOfWord:
+        text = tr("Delete to the end of the word");
+        break;
 
-//        case InsertParagraphSeparator:
-//            text = tr("Insert a new paragraph");
-//            break;
-//        case InsertLineSeparator:
-//            text = tr("Insert a new line");
-//            break;
+    case InsertParagraphSeparator:
+        text = tr("Insert a new paragraph");
+        break;
+    case InsertLineSeparator:
+        text = tr("Insert a new line");
+        break;
 
-//        case PasteAndMatchStyle:
-//            text = tr("Paste and Match Style");
-//            break;
-//        case RemoveFormat:
-//            text = tr("Remove formatting");
-//            break;
+    case PasteAndMatchStyle:
+        text = tr("Paste and Match Style");
+        break;
+    case RemoveFormat:
+        text = tr("Remove formatting");
+        break;
 
-//        case ToggleStrikethrough:
-//            text = tr("Strikethrough");
-//            checkable = true;
-//            break;
-//        case ToggleSubscript:
-//            text = tr("Subscript");
-//            checkable = true;
-//            break;
-//        case ToggleSuperscript:
-//            text = tr("Superscript");
-//            checkable = true;
-//            break;
-//        case InsertUnorderedList:
-//            text = tr("Insert Bulleted List");
-//            checkable = true;
-//            break;
-//        case InsertOrderedList:
-//            text = tr("Insert Numbered List");
-//            checkable = true;
-//            break;
-//        case Indent:
-//            text = tr("Indent");
-//            break;
-//        case Outdent:
-//            text = tr("Outdent");
-//            break;
-//        case AlignCenter:
-//            text = tr("Center");
-//            break;
-//        case AlignJustified:
-//            text = tr("Justify");
-//            break;
-//        case AlignLeft:
-//            text = tr("Align Left");
-//            break;
-//        case AlignRight:
-//            text = tr("Align Right");
-//            break;
-//        case NoWebAction:
-//            return 0;
-//        default:
-//            break;
-//    }
-//    if (mappedAction != QUltralightPageAdapter::NoAction)
-//        text = d->contextMenuItemTagForAction(mappedAction, &checkable);
+    case ToggleStrikethrough:
+        text = tr("Strikethrough");
+        checkable = true;
+        break;
+    case ToggleSubscript:
+        text = tr("Subscript");
+        checkable = true;
+        break;
+    case ToggleSuperscript:
+        text = tr("Superscript");
+        checkable = true;
+        break;
+    case InsertUnorderedList:
+        text = tr("Insert Bulleted List");
+        checkable = true;
+        break;
+    case InsertOrderedList:
+        text = tr("Insert Numbered List");
+        checkable = true;
+        break;
+    case Indent:
+        text = tr("Indent");
+        break;
+    case Outdent:
+        text = tr("Outdent");
+        break;
+    case AlignCenter:
+        text = tr("Center");
+        break;
+    case AlignJustified:
+        text = tr("Justify");
+        break;
+    case AlignLeft:
+        text = tr("Align Left");
+        break;
+    case AlignRight:
+        text = tr("Align Right");
+        break;
+    case NoWebAction:
+        return 0;
+    default:
+        break;
+    }
 
-//    if (text.isEmpty())
-//        return 0;
+    if (text.isEmpty())
+        return 0;
 
-//    QAction *a = new QAction(d->q);
-//    a->setText(text);
-//    a->setData(action);
-//    a->setCheckable(checkable);
-//    a->setIcon(icon);
+    QAction *a = new QAction();
+    a->setText(text);
+    a->setData(action);
+    a->setCheckable(checkable);
+    a->setIcon(icon);
 
 //    connect(a, SIGNAL(triggered(bool)),
 //        this, SLOT(_q_webActionTriggered(bool)));
 
 //    d->actions[action] = a;
 //    d->updateAction(action);
-//    return a;
-    return 0;
+    return a;
 }
 
 QAction* QUltralightPage::customAction(int action) const
@@ -752,38 +931,38 @@ QAction* QUltralightPage::customAction(int action) const
 //    if (actionIter != d->customActions.constEnd())
 //        return *actionIter;
 
-//    QAction* a = new QAction(d->q);
-//    a->setData(action);
-//    connect(a, SIGNAL(triggered(bool)),
-//        this, SLOT(_q_customActionTriggered(bool)));
+    QAction* a = new QAction();
+    a->setData(action);
+    connect(a, SIGNAL(triggered(bool)),
+        this, SLOT(_q_customActionTriggered(bool)));
 
 //    d->customActions.insert(action, a);
-//    return a;
-    return 0;
+    return a;
 }
 #endif // QT_NO_ACTION
 
 bool QUltralightPage::isModified() const
 {
-//#ifdef QT_NO_UNDOSTACK
-//    return false;
-//#else
-//    if (!d->undoStack)
-//        return false;
-//    return d->undoStack->canUndo();
-//#endif // QT_NO_UNDOSTACK
+#ifdef QT_NO_UNDOSTACK
+    return false;
+#else
+    if (!_undoStack)
+        return false;
+    return _undoStack->canUndo();
+#endif // QT_NO_UNDOSTACK
     return false;
 }
 
-//#ifndef QT_NO_UNDOSTACK
-//QUndoStack *QUltralightPage::undoStack() const
-//{
-//    if (!d->undoStack)
-//        d->undoStack = new QUndoStack(const_cast<QUltralightPage *>(this));
-
-//    return d->undoStack;
-//}
-//#endif // QT_NO_UNDOSTACK
+#ifndef QT_NO_UNDOSTACK
+QUndoStack *QUltralightPage::undoStack() const
+{
+    if (!_undoStack) {
+        QUltralightPage *that = const_cast<QUltralightPage *>(this);
+        that->_undoStack = new QUndoStack(that);
+    }
+    return _undoStack;
+}
+#endif // QT_NO_UNDOSTACK
 
 bool QUltralightPage::event(QEvent *ev)
 {
@@ -861,7 +1040,7 @@ bool QUltralightPage::event(QEvent *ev)
 //#endif
 //#endif
 //    case QEvent::KeyPress:
-//        d->keyPressEvent(static_cast<QKeyEvent*>(ev));
+//        qobject_cast<QUltralightView*>(view())->sendKey(static_cast<QKeyEvent*>(ev));
 //        break;
 //    case QEvent::KeyRelease:
 //        d->keyReleaseEvent(static_cast<QKeyEvent*>(ev));
@@ -943,7 +1122,7 @@ bool QUltralightPage::event(QEvent *ev)
 bool QUltralightPage::focusNextPrevChild(bool next)
 {
     QKeyEvent ev(QEvent::KeyPress, Qt::Key_Tab, Qt::KeyboardModifiers(next ? Qt::NoModifier : Qt::ShiftModifier));
-    ((QUltralightView*) view())->sendKey(&ev);
+//    qobject_cast<QUltralightView*>(view())->sendKey(&ev);
     return true;
 }
 
@@ -1015,37 +1194,37 @@ bool QUltralightPage::swallowContextMenuEvent(QContextMenuEvent *event)
 
 void QUltralightPage::updatePositionDependentActions(const QPoint &pos)
 {
-//#ifndef QT_NO_ACTION
-//    // First we disable all actions, but keep track of which ones were originally enabled.
-//    QBitArray originallyEnabledWebActions(QUltralightPage::WebActionCount);
-//    for (int i = QUltralightPageAdapter::NoAction + 1; i < QUltralightPageAdapter::ActionCount; ++i) {
-//        QUltralightPage::WebAction action = webActionForAdapterMenuAction(QUltralightPageAdapter::MenuAction(i));
-//        if (QAction *a = this->action(action)) {
-//            originallyEnabledWebActions.setBit(action, a->isEnabled());
-//            a->setEnabled(false);
-//        }
-//    }
-//#endif // QT_NO_ACTION
+#ifndef QT_NO_ACTION
+    // First we disable all actions, but keep track of which ones were originally enabled.
+    QBitArray originallyEnabledWebActions(QUltralightPage::WebActionCount);
+    for (int i = (int) MenuAction::NoAction + 1; i < (int) MenuAction::ActionCount; ++i) {
+        QUltralightPage::WebAction action = webActionForAdapterMenuAction(MenuAction(i));
+        if (QAction *a = this->action(action)) {
+            originallyEnabledWebActions.setBit(action, a->isEnabled());
+            a->setEnabled(false);
+        }
+    }
+#endif // QT_NO_ACTION
 
-//    QBitArray visitedWebActions(QUltralightPage::WebActionCount);
+    QBitArray visitedWebActions(QUltralightPage::WebActionCount);
 //    d->createMainFrame();
 //    // Then we let updatePositionDependantMenuActions() enable the actions that are put into the menu
-//    QUltralightHitTestResultPrivate* result = d->updatePositionDependentMenuActions(pos, &visitedWebActions);
+//    QUltralightHitTestResult* result = d->updatePositionDependentMenuActions(pos, &visitedWebActions);
 //    if (!result)
-//        d->hitTestResult = QUltralightHitTestResult();
+//        _hitTestResult = QUltralightHitTestResult();
 //    else
-//        d->hitTestResult = QUltralightHitTestResult(result);
+//        _hitTestResult = QUltralightHitTestResult(result);
 
-//#ifndef QT_NO_ACTION
-//    // Finally, we restore the original enablement for the actions that were not put into the menu.
-//    originallyEnabledWebActions &= ~visitedWebActions; // Mask out visited actions (they're part of the menu)
-//    for (int i = 0; i < QUltralightPage::WebActionCount; ++i) {
-//        if (originallyEnabledWebActions.at(i)) {
-//            if (QAction *a = this->action(QUltralightPage::WebAction(i)))
-//                a->setEnabled(true);
-//        }
-//    }
-//#endif // QT_NO_ACTION
+#ifndef QT_NO_ACTION
+    // Finally, we restore the original enablement for the actions that were not put into the menu.
+    originallyEnabledWebActions &= ~visitedWebActions; // Mask out visited actions (they're part of the menu)
+    for (int i = 0; i < QUltralightPage::WebActionCount; ++i) {
+        if (originallyEnabledWebActions.at(i)) {
+            if (QAction *a = this->action(QUltralightPage::WebAction(i)))
+                a->setEnabled(true);
+        }
+    }
+#endif // QT_NO_ACTION
 
     // This whole process ensures that any actions put into to the context menu has the right
     // enablement, while also keeping the correct enablement for actions that were left out of
@@ -1203,8 +1382,3 @@ bool QUltralightPage::recentlyAudible() const
 //    return d->isPlayingAudio();
     return false;
 }
-
-//ultralight::RefPtr<ultralight::Overlay> QUltralightPage::ulOverlay() const
-//{
-//    return _overlay;
-//}

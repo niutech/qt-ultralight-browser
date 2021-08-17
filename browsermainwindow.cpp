@@ -139,13 +139,14 @@ BrowserMainWindow::BrowserMainWindow(QWidget *parent, Qt::WindowFlags flags)
 
     int size = m_tabWidget->lineEditStack()->sizeHint().height();
     m_navigationBar->setIconSize(QSize(size, size));
-
 }
 
 BrowserMainWindow::~BrowserMainWindow()
 {
     m_autoSaver->changeOccurred();
     m_autoSaver->saveIfNeccessary();
+    if (BrowserApplication::instance()->mainWindows().count() == 1)
+        BrowserApplication::instance()->quit();
 }
 
 void BrowserMainWindow::loadDefaultState()
@@ -430,7 +431,7 @@ void BrowserMainWindow::setupMenu()
 
     QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(tr("About &Qt"), qApp, SLOT(aboutQt()));
-    helpMenu->addAction(tr("About &Demo Browser"), this, SLOT(slotAboutApplication()));
+    helpMenu->addAction(tr("About " APP_NAME), this, SLOT(slotAboutApplication()));
 }
 
 void BrowserMainWindow::setupToolBar()
@@ -581,12 +582,12 @@ void BrowserMainWindow::slotUpdateStatusbar(const QString &string)
 void BrowserMainWindow::slotUpdateWindowTitle(const QString &title)
 {
     if (title.isEmpty()) {
-        setWindowTitle(tr("Qt Demo Browser"));
+        setWindowTitle(APP_NAME);
     } else {
 #if defined(Q_OS_OSX)
         setWindowTitle(title);
 #else
-        setWindowTitle(tr("%1 - Qt Demo Browser", "Page title and Browser name").arg(title));
+        setWindowTitle(tr("%1 - " APP_NAME, "Page title and Browser name").arg(title));
 #endif
     }
 }
@@ -788,7 +789,7 @@ void BrowserMainWindow::slotHome()
 {
     QSettings settings;
     settings.beginGroup(QLatin1String("MainWindow"));
-    QString home = settings.value(QLatin1String("home"), QLatin1String("http://qt-project.org/")).toString();
+    QString home = settings.value(QLatin1String("home"), QLatin1String("https://duckduckgo.com/")).toString();
     loadPage(home);
 }
 

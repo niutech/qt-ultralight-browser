@@ -179,9 +179,6 @@ public:
 
 private:
     friend class QUltralightPage;
-//    friend class QUltralightPageAdapter;
-//    friend class QUltralightPagePrivate;
-//    friend class QUltralightSettingsPrivate;
 
     Q_DISABLE_COPY(QUltralightSettings)
 

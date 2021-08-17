@@ -18,7 +18,7 @@
 */
 
 #include "qultralightframe.h"
-#include "qultralightpage.h"
+#include "qultralightview.h"
 
 #include <QFileInfo>
 
@@ -31,17 +31,17 @@ QT_END_NAMESPACE
 QUltralightFrame::QUltralightFrame(QUltralightPage *parentPage) : QObject(parentPage)
 {
     _page = parentPage;
-    _view = parentPage->_overlay->view();
+    _view = qobject_cast<QUltralightView*>(parentPage->_view);
 }
 
 QUltralightFrame::QUltralightFrame(QUltralightFrame* parent, QUltralightFrameData* frameData) : QObject(parent)
 {
     _page = parent->_page;
+    _view = qobject_cast<QUltralightView*>(parent->_page->_view);
 }
 
 QUltralightFrame::~QUltralightFrame()
 {
-    delete _page;
 }
 
 void QUltralightFrame::addToJavaScriptWindowObject(const QString &name, QObject *object, ValueOwnership ownership)
@@ -64,7 +64,7 @@ QString QUltralightFrame::toPlainText() const
 
 QString QUltralightFrame::title() const
 {
-    return ulStringToQString(_view->title());
+    return QUltralightView::ulStringToQString(_view->_overlay->view()->title());
 }
 
 QMultiMap<QString, QString> QUltralightFrame::metaData() const
@@ -81,7 +81,7 @@ void QUltralightFrame::setUrl(const QUrl &url)
 
 QUrl QUltralightFrame::url() const
 {
-    return ulStringToQUrl(_view->url());
+    return QUltralightView::ulStringToQUrl(_view->_overlay->view()->url());
 }
 
 QUrl QUltralightFrame::requestedUrl() const
@@ -96,8 +96,7 @@ QUrl QUltralightFrame::baseUrl() const
 
 QIcon QUltralightFrame::icon() const
 {
-//    return QUltralightSettings::iconForUrl(d->coreFrameUrl());
-    return QIcon();
+    return QUltralightSettings::iconForUrl(url());
 }
 
 QString QUltralightFrame::frameName() const
@@ -119,12 +118,12 @@ void QUltralightFrame::load(const QUrl &url)
 
 void QUltralightFrame::load(const QNetworkRequest &req, QNetworkAccessManager::Operation operation, const QByteArray &body)
 {
-    _view->LoadURL(QUrlToUlString(req.url()));
+    _view->_overlay->view()->LoadURL(QUltralightView::QUrlToUlString(req.url()));
 }
 
 void QUltralightFrame::setHtml(const QString &html, const QUrl &baseUrl)
 {
-    _view->LoadHTML(QStringToUlString(html), QUrlToUlString(baseUrl));
+    _view->_overlay->view()->LoadHTML(QUltralightView::QStringToUlString(html), QUltralightView::QUrlToUlString(baseUrl));
 }
 
 void QUltralightFrame::setContent(const QByteArray &data, const QString &mimeType, const QUrl &baseUrl)
@@ -253,32 +252,27 @@ qreal QUltralightFrame::zoomFactor() const
 
 bool QUltralightFrame::hasFocus() const
 {
-    return _view->HasFocus();
+    return _view->_overlay->view()->HasFocus();
 }
 
 void QUltralightFrame::setFocus()
 {
-    _view->Focus();
+    _view->_overlay->view()->Focus();
 }
 
 QPoint QUltralightFrame::pos() const
 {
-//    if (!d->hasView())
-//        return QPoint();
-//    return d->frameRect().topLeft();
-    return QPoint();
+    return QPoint(_view->_overlay->x(), _view->_overlay->y());
 }
 
 QRect QUltralightFrame::geometry() const
 {
-//    return d->frameRect();
-    return QRect();
+    return QRect(_view->_overlay->x(), _view->_overlay->y(), _view->_overlay->width(), _view->_overlay->height());
 }
 
 QSize QUltralightFrame::contentsSize() const
 {
-//    return d->contentsSize();
-    return QSize(_view->surface()->width(), _view->surface()->height());
+    return QSize(_view->_overlay->view()->surface()->width(), _view->_overlay->view()->surface()->height());
 }
 
 //QWebElement QUltralightFrame::documentElement() const
@@ -397,43 +391,13 @@ void QUltralightFrame::print(QPrinter *printer) const
 
 QVariant QUltralightFrame::evaluateJavaScript(const QString& scriptSource)
 {
-    return ulStringToQString(_view->EvaluateScript(QStringToUlString(scriptSource)));
+    return QUltralightView::ulStringToQString(_view->_overlay->view()->EvaluateScript(QUltralightView::QStringToUlString(scriptSource)));
 }
 
 //QUltralightSecurityOrigin QUltralightFrame::securityOrigin() const
 //{
 //    return d->securityOrigin();
 //}
-
-//QUltralightFrameAdapter *QUltralightFrame::handle() const
-//{
-//    return d;
-//}
-
-//ultralight::RefPtr<ultralight::View> QUltralightFrame::ulView() const
-//{
-//    return _view;
-//}
-
-QString QUltralightFrame::ulStringToQString(const ultralight::String string) const
-{
-    return QString::fromUtf8(string.utf8().data());
-}
-
-QUrl QUltralightFrame::ulStringToQUrl(const ultralight::String string) const
-{
-    return QUrl(ulStringToQString(string));
-}
-
-ultralight::String QUltralightFrame::QStringToUlString(const QString string) const
-{
-    return (ultralight::String8) string.toUtf8().constData();
-}
-
-ultralight::String QUltralightFrame::QUrlToUlString(const QUrl url) const
-{
-    return QStringToUlString(url.toString());
-}
 
 QUrl QUltralightFrame::ensureAbsoluteUrl(const QUrl& url)
 {

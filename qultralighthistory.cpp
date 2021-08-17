@@ -129,6 +129,7 @@ QUltralightHistory::QUltralightHistory()
 QUltralightHistory::QUltralightHistory(QUltralightPage *page)
 {
      _page = page;
+     _view = qobject_cast<QUltralightView*>(page->_view);
 }
 
 QUltralightHistory::~QUltralightHistory()
@@ -203,28 +204,27 @@ QList<QUltralightHistoryItem> QUltralightHistory::forwardItems(int maxItems) con
 
 bool QUltralightHistory::canGoBack() const
 {
-    if (_page)
-        return _page->_overlay->view()->CanGoBack();
+    if (_view)
+        return _view->_overlay->view()->CanGoBack();
     return false;
 }
 
 bool QUltralightHistory::canGoForward() const
 {
-    if (_page)
-        return _page->_overlay->view()->CanGoForward();
-    return false;
+    if (_view)
+        return _view->_overlay->view()->CanGoForward();
 }
 
 void QUltralightHistory::back()
 {
     if (canGoBack())
-        _page->_overlay->view()->GoBack();
+        _view->_overlay->view()->GoBack();
 }
 
 void QUltralightHistory::forward()
 {
     if (canGoForward())
-        _page->_overlay->view()->GoForward();
+        _view->_overlay->view()->GoForward();
 }
 
 void QUltralightHistory::goToItem(const QUltralightHistoryItem &item)
@@ -232,7 +232,7 @@ void QUltralightHistory::goToItem(const QUltralightHistoryItem &item)
     //TODO calclate offset
     int offset = 0;
     if ((offset < 0 && canGoBack()) || (offset > 0 && canGoForward()))
-        _page->_overlay->view()->GoToHistoryOffset(offset);
+        _view->_overlay->view()->GoToHistoryOffset(offset);
 }
 
 QUltralightHistoryItem QUltralightHistory::backItem() const
