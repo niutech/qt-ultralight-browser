@@ -145,8 +145,9 @@ BrowserMainWindow::~BrowserMainWindow()
 {
     m_autoSaver->changeOccurred();
     m_autoSaver->saveIfNeccessary();
-    if (BrowserApplication::instance()->mainWindows().count() == 1)
-        BrowserApplication::instance()->quit();
+    if (BrowserApplication::instance()->mainWindows().count() == 1) {
+        QTimer::singleShot(100, BrowserApplication::instance(), &BrowserApplication::quit);
+    }
 }
 
 void BrowserMainWindow::loadDefaultState()

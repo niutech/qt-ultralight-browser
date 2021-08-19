@@ -167,6 +167,8 @@ BrowserApplication::BrowserApplication(int &argc, char **argv)
             this, SLOT(lastWindowClosed()));
 #endif
 
+    QTimer::singleShot(0, this, SLOT(postLaunch()));
+
     //Ultralight
     ultralight::Settings _settings;
     _settings.developer_name = DEVELOPER_NAME;
@@ -175,8 +177,9 @@ BrowserApplication::BrowserApplication(int &argc, char **argv)
     _config.memory_cache_size = 128 * 1024 * 1024;
     _config.page_cache_size = 2;
     app = ultralight::App::Create(_settings, _config);
-
-    QTimer::singleShot(0, this, SLOT(postLaunch()));
+    connect(this, &BrowserApplication::aboutToQuit, [=]() {
+        app->Quit();
+    });
 }
 
 BrowserApplication::~BrowserApplication()
@@ -188,9 +191,6 @@ BrowserApplication::~BrowserApplication()
     }
     delete s_networkAccessManager;
     delete s_bookmarksManager;
-
-    //Ultralight
-    app->Quit();
 }
 
 #if defined(Q_OS_OSX)

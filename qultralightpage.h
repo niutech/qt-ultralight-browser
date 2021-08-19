@@ -349,7 +349,6 @@ public:
 
 #ifndef QT_NO_ACTION
     QAction *action(WebAction action) const;
-    QAction *customAction(int action) const;
 #endif
     virtual void triggerAction(WebAction action, bool checked = false);
 
@@ -477,7 +476,7 @@ Q_SIGNALS:
 
     void featurePermissionRequested(QUltralightFrame* frame, QUltralightPage::Feature feature);
     void featurePermissionRequestCanceled(QUltralightFrame* frame, QUltralightPage::Feature feature);
-    //void fullScreenRequested(QWebFullScreenRequest fullScreenRequest);
+//    void fullScreenRequested(QWebFullScreenRequest fullScreenRequest);
 
     void consoleMessageReceived(MessageSource source, MessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
 
@@ -495,6 +494,11 @@ protected:
     virtual void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
 
     virtual QString userAgentForUrl(const QUrl& url) const;
+
+private slots:
+#ifndef QT_NO_ACTION
+    void webActionTriggered(bool checked);
+#endif
 
 private:
     QWidget *_view;

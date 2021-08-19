@@ -27,6 +27,7 @@
 #include <QtWidgets/qwidget.h>
 #include <QGridLayout>
 #include <QKeyEvent>
+#include <QTimer>
 #include <AppCore/AppCore.h>
 #include "qultralightpage.h"
 //#include "qultralightframe.h"
@@ -167,6 +168,8 @@ protected:
 
 private:
     QUltralightPage* _page;
+    QTimer* _progressTimer;
+    int _progress = 0;
 
     // Ultralight
     ultralight::RefPtr<ultralight::Window> _window;

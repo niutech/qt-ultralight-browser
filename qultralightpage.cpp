@@ -80,51 +80,6 @@ static QUltralightPage::WebAction webActionForAdapterMenuAction(QUltralightPage:
     return QUltralightPage::NoWebAction;
 }
 
-static QUltralightPage::MenuAction adapterMenuActionForWebAction(QUltralightPage::WebAction action)
-{
-    switch (action) {
-    case QUltralightPage::OpenLink: return QUltralightPage::MenuAction::OpenLink;
-    case QUltralightPage::OpenLinkInNewWindow: return QUltralightPage::MenuAction::OpenLinkInNewWindow;
-    case QUltralightPage::OpenFrameInNewWindow: return QUltralightPage::MenuAction::OpenFrameInNewWindow;
-    case QUltralightPage::DownloadLinkToDisk: return QUltralightPage::MenuAction::DownloadLinkToDisk;
-    case QUltralightPage::CopyLinkToClipboard: return QUltralightPage::MenuAction::CopyLinkToClipboard;
-    case QUltralightPage::OpenImageInNewWindow: return QUltralightPage::MenuAction::OpenImageInNewWindow;
-    case QUltralightPage::DownloadImageToDisk: return QUltralightPage::MenuAction::DownloadImageToDisk;
-    case QUltralightPage::CopyImageToClipboard: return QUltralightPage::MenuAction::CopyImageToClipboard;
-    case QUltralightPage::Back: return QUltralightPage::MenuAction::Back;
-    case QUltralightPage::Forward: return QUltralightPage::MenuAction::Forward;
-    case QUltralightPage::Stop: return QUltralightPage::MenuAction::Stop;
-    case QUltralightPage::Reload: return QUltralightPage::MenuAction::Reload;
-    case QUltralightPage::Cut: return QUltralightPage::MenuAction::Cut;
-    case QUltralightPage::Copy: return QUltralightPage::MenuAction::Copy;
-    case QUltralightPage::Paste: return QUltralightPage::MenuAction::Paste;
-    case QUltralightPage::Undo: return QUltralightPage::MenuAction::Undo;
-    case QUltralightPage::Redo: return QUltralightPage::MenuAction::Redo;
-    case QUltralightPage::SetTextDirectionDefault: return QUltralightPage::MenuAction::SetTextDirectionDefault;
-    case QUltralightPage::SetTextDirectionLeftToRight: return QUltralightPage::MenuAction::SetTextDirectionLeftToRight;
-    case QUltralightPage::SetTextDirectionRightToLeft: return QUltralightPage::MenuAction::SetTextDirectionRightToLeft;
-    case QUltralightPage::ToggleBold: return QUltralightPage::MenuAction::ToggleBold;
-    case QUltralightPage::ToggleItalic: return QUltralightPage::MenuAction::ToggleItalic;
-    case QUltralightPage::ToggleUnderline: return QUltralightPage::MenuAction::ToggleUnderline;
-    case QUltralightPage::InspectElement: return QUltralightPage::MenuAction::InspectElement;
-    case QUltralightPage::SelectAll: return QUltralightPage::MenuAction::SelectAll;
-    case QUltralightPage::CopyImageUrlToClipboard: return QUltralightPage::MenuAction::CopyImageUrlToClipboard;
-    case QUltralightPage::OpenLinkInThisWindow: return QUltralightPage::MenuAction::OpenLinkInThisWindow;
-    case QUltralightPage::DownloadMediaToDisk: return QUltralightPage::MenuAction::DownloadMediaToDisk;
-    case QUltralightPage::CopyMediaUrlToClipboard: return QUltralightPage::MenuAction::CopyMediaUrlToClipboard;
-    case QUltralightPage::ToggleMediaControls: return QUltralightPage::MenuAction::ToggleMediaControls;
-    case QUltralightPage::ToggleMediaLoop: return QUltralightPage::MenuAction::ToggleMediaLoop;
-    case QUltralightPage::ToggleMediaPlayPause: return QUltralightPage::MenuAction::ToggleMediaPlayPause;
-    case QUltralightPage::ToggleMediaMute: return QUltralightPage::MenuAction::ToggleMediaMute;
-    case QUltralightPage::ToggleVideoFullscreen: return QUltralightPage::MenuAction::ToggleVideoFullscreen;
-    case QUltralightPage::WebActionCount: return QUltralightPage::MenuAction::ActionCount;
-    default:
-        Q_UNREACHABLE();
-        break;
-    }
-    return QUltralightPage::MenuAction::NoAction;
-}
-
 QUltralightPage::QUltralightPage(QObject *parent) : QObject(parent)
 {
     setView(qobject_cast<QWidget*>(parent));
@@ -362,9 +317,7 @@ static void collectChildFrames(QUltralightFrame* frame, QList<QUltralightFrame*>
 
 void QUltralightPage::triggerAction(WebAction action, bool)
 {
-//    const char *command = 0;
-    MenuAction mappedAction = MenuAction::NoAction;
-
+    ultralight::Ref<ultralight::View> ulView = qobject_cast<QUltralightView*>(view())->_overlay->view();
     switch (action) {
     case OpenLink:
     case OpenLinkInNewWindow:
@@ -375,9 +328,19 @@ void QUltralightPage::triggerAction(WebAction action, bool)
     case DownloadImageToDisk:
     case DownloadLinkToDisk:
     case Back:
+        history()->back();
+        break;
     case Forward:
+        history()->forward();
+        break;
     case Stop:
+    case StopScheduledPageRefresh:
+        ulView->Stop();
+        break;
     case Reload:
+    case ReloadAndBypassCache:
+        ulView->Reload();
+        break;
     case SetTextDirectionDefault:
     case SetTextDirectionLeftToRight:
     case SetTextDirectionRightToLeft:
@@ -387,10 +350,6 @@ void QUltralightPage::triggerAction(WebAction action, bool)
     case ToggleMediaPlayPause:
     case ToggleMediaMute:
     case ToggleVideoFullscreen:
-        mappedAction = adapterMenuActionForWebAction(action);
-        break;
-    case ReloadAndBypassCache: // Manual mapping
-        mappedAction = MenuAction::Reload;
         break;
 #ifndef QT_NO_CLIPBOARD
     case CopyImageToClipboard:
@@ -403,31 +362,17 @@ void QUltralightPage::triggerAction(WebAction action, bool)
         QApplication::clipboard()->setText(_hitTestResult->mediaUrl().toString());
         break;
 #endif
-    case InspectElement: {
+    case InspectElement:
         if (!_hitTestResult->isNull()) {
-            mappedAction = MenuAction::InspectElement;
             //Ultralight
             qobject_cast<QUltralightView*>(view())->_overlay->view()->inspector()->Resize(qobject_cast<QUltralightView*>(view())->_overlay->width(), 400);
         }
         break;
-    }
-    case StopScheduledPageRefresh: {
-//        QUltralightFrame* topFrame = mainFrame();
-//        topFrame->d->cancelLoad();
-//        QList<QUltralightFrame*> childFrames;
-//        collectChildFrames(topFrame, childFrames);
-//        QListIterator<QUltralightFrame*> it(childFrames);
-//        while (it.hasNext())
-//            it.next()->d->cancelLoad();
-        mappedAction = MenuAction::Stop;
-        break;
-    }
-    case RequestClose: {
+    case RequestClose:
 //        bool success = d->tryClosePage();
 //        if (success)
             emit windowCloseRequested();
         break;
-    }
     default:
 //        command = QUltralightPage::editorCommandForWebActions(action);
         break;
@@ -917,27 +862,21 @@ QAction *QUltralightPage::action(WebAction action) const
     a->setCheckable(checkable);
     a->setIcon(icon);
 
-//    connect(a, SIGNAL(triggered(bool)),
-//        this, SLOT(_q_webActionTriggered(bool)));
+    connect(a, SIGNAL(triggered(bool)),
+        this, SLOT(webActionTriggered(bool)));
 
 //    d->actions[action] = a;
 //    d->updateAction(action);
     return a;
 }
 
-QAction* QUltralightPage::customAction(int action) const
+void QUltralightPage::webActionTriggered(bool checked)
 {
-//    auto actionIter = d->customActions.constFind(action);
-//    if (actionIter != d->customActions.constEnd())
-//        return *actionIter;
-
-    QAction* a = new QAction();
-    a->setData(action);
-    connect(a, SIGNAL(triggered(bool)),
-        this, SLOT(_q_customActionTriggered(bool)));
-
-//    d->customActions.insert(action, a);
-    return a;
+    QAction *a = qobject_cast<QAction *>(sender());
+    if (!a)
+        return;
+    WebAction action = static_cast<WebAction>(a->data().toInt());
+    triggerAction(action, checked);
 }
 #endif // QT_NO_ACTION
 

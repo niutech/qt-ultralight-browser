@@ -292,21 +292,25 @@ void QUltralightView::print(QPrinter *printer) const
 
 void QUltralightView::stop()
 {
+    _progressTimer->stop();
     page()->triggerAction(QUltralightPage::Stop);
 }
 
 void QUltralightView::back()
 {
+    _progressTimer->stop();
     page()->triggerAction(QUltralightPage::Back);
 }
 
 void QUltralightView::forward()
 {
+    _progressTimer->stop();
     page()->triggerAction(QUltralightPage::Forward);
 }
 
 void QUltralightView::reload()
 {
+    _progressTimer->stop();
     page()->triggerAction(QUltralightPage::Reload);
 }
 
@@ -652,13 +656,21 @@ ultralight::RefPtr<ultralight::View> QUltralightView::OnCreateChildView(ultralig
 
 void QUltralightView::OnBeginLoading(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
 {
-    if (is_main_frame)
+    if (is_main_frame) {
+        _progress = 0;
+        _progressTimer = new QTimer(this);
+        connect(_progressTimer, &QTimer::timeout, this, [=]() {
+            if (_progress < 100) emit page()->loadProgress(log10(++_progress) * 50);
+        });
+        _progressTimer->start(100);
         emit page()->mainFrame()->loadStarted();
+    }
 }
 
 void QUltralightView::OnFinishLoading(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
 {
     if (is_main_frame) {
+        _progressTimer->stop();
         emit page()->loadProgress(100);
         emit page()->mainFrame()->loadFinished(true);
     }
@@ -667,9 +679,11 @@ void QUltralightView::OnFinishLoading(ultralight::View *caller, uint64_t frame_i
 void QUltralightView::OnFailLoading(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url, const ultralight::String &description, const ultralight::String &error_domain, int error_code)
 {
     qCritical() << "ERROR" << error_code << "(" << ulStringToQString(error_domain) << ")" << ulStringToQString(description) << "while loading" << ulStringToQUrl(url).toString();
-    if (is_main_frame)
+    if (is_main_frame) {
+        _progressTimer->stop();
         emit page()->loadProgress(100);
         emit page()->mainFrame()->loadFinished(false);
+    }
 }
 
 void QUltralightView::OnWindowObjectReady(ultralight::View *caller, uint64_t frame_id, bool is_main_frame, const ultralight::String &url)
