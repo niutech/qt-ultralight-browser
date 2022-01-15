@@ -25,6 +25,6 @@ Contributions are welcome. Let's meet in #app-development channel on [Ultralight
 
 ## License
 
-Qt Ultralight Browser &copy; 2021 Jerzy Głowacki under [LGPL 3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
+Qt Ultralight Browser &copy; 2022 Jerzy Głowacki under [LGPL 3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
 
-Ultralight &copy; 2021 Ultralight Inc. under [Ultralight Free License Agreement](https://github.com/ultralight-ux/Ultralight/blob/master/license/LICENSE.txt).
+Ultralight &copy; 2022 Ultralight Inc. under [Ultralight Free License Agreement](https://github.com/ultralight-ux/Ultralight/blob/master/license/LICENSE.txt).
